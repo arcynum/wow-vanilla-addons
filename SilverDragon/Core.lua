@@ -230,20 +230,20 @@ function SilverDragon:OnTooltipUpdate()
 end
 
 function SilverDragon:LastSeen(t)
-	-- if t == 0 then return L['Never'] end
-	-- local lastseen
-	-- local currentTime = time()
-	-- local minutes = math.ceil((currentTime - t) / 60)
-	-- if minutes > 59 then
-	-- 	local hours = math.ceil((currentTime - t) / 3600)
-	-- 	if hours > 23 then
-	-- 		lastseen = math.ceil((currentTime - t) / 86400)..L[" day(s)"]
-	-- 	else
-	-- 		lastseen = hours..L[" hour(s)"]
-	-- 	end
-	-- else
-	-- 	lastseen = minutes..L[" minute(s)"]
-	-- end
+	if t == 0 then return L['Never'] end
+	local lastseen
+	local currentTime = time()
+	local minutes = math.ceil((currentTime - t) / 60)
+	if minutes > 59 then
+		local hours = math.ceil((currentTime - t) / 3600)
+		if hours > 23 then
+			lastseen = math.ceil((currentTime - t) / 86400)..L[" day(s)"]
+		else
+			lastseen = hours..L[" hour(s)"]
+		end
+	else
+		lastseen = minutes..L[" minute(s)"]
+	end
 	return L['Never']
 end
 
