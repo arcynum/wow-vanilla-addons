@@ -31,6 +31,7 @@ L:RegisterTranslations("enUS", function() return {
 	[" day(s)"] = true,
 	[" hour(s)"] = true,
 	[" minute(s)"] = true,
+	["Now"] = true,
 	
 	["Raretracker needs to be loaded for this to work."] = true,
 } end)

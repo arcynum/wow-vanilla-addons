@@ -149,39 +149,36 @@ end
 function SilverDragon:SaveMob(zone, name, x, y, level, elite, ctype, subzone)
 	self.db.profile.mobs[zone][name] = string.format("%s:%s:%d:%d:%s:%s:%d", math.floor(x * 1000)/10, math.floor(y * 1000)/10, level, elite, ctype, subzone, self.lastseen[name] or 0)
 end
+
 function SilverDragon:GetMobInfo(zone, name)
 	if self.db.profile.mobs[zone][name] then
-		--local x,y,level,elite,ctype,csubzone,lastseen = string.match(self.db.profile.mobs[zone][name], "^(.*):(.*):(-?%d*):(%d*):(.*):(.*):(%d*)")
-		local _, _, x,y,level,elite,ctype,csubzone,lastseen = string.find(self.db.profile.mobs[zone][name], "^(.*):(.*):(-?%d*):(%d*):(.*):(.*):(%d*)")
+		-- This seems to be in place because the first 2 parameters are nil.
+		local _,_,x,y,level,elite,ctype,csubzone,lastseen = string.find(self.db.profile.mobs[zone][name], "^(.*):(.*):(-?%d*):(%d*):(.*):(.*):(%d*)")
 		return tonumber(x), tonumber(y), tonumber(level), tonumber(elite), ctype, csubzone, tonumber(lastseen)
 	else
 		return 0, 0, 0, 0, '', '', nil
 	end
 end
 
-do
+function SilverDragon:IsRare(unit)
 	local distanceCache = {}
-	function SilverDragon:IsRare(unit)
-		local c12n = UnitClassification(unit)
-		if c12n == 'rare' or c12n == 'rareelite' then
-			local name = UnitName(unit)
-			local distance = 1000
-			if CheckInteractDistance(unit, 3) then
-				distance = 10
-			elseif CheckInteractDistance(unit, 4) then
-				distance = 30
-			end
-			self:Announce(name, UnitIsDead(unit))
-			if UnitIsVisible(unit) and distance < (distanceCache[name] or 100) then -- (Are we 30 yards or less from it; trying to prevent wildly inaccurate notes, here.)
-				-- Store as: x:y:level:elite:type:subzone:lastseen
-				distanceCache[name] = distance
-				local x, y = GetPlayerMapPosition("player")
-				self:SaveMob(GetRealZoneText(), name, x, y, UnitLevel(unit), c12n=='rareelite' and 1 or 0, UnitCreatureType(unit), GetSubZoneText())
-				
-				self:Update()
-				if self.db.profile.notes and Cartographer_Notes and not (x == 0 and y == 0) then
-					self:SetNoteHere(name)
-				end
+	local c12n = UnitClassification(unit)
+	if c12n == 'rare' or c12n == 'rareelite' then
+		local name = UnitName(unit)
+		local distance = 1000
+		if CheckInteractDistance(unit, 3) then
+			distance = 10
+		elseif CheckInteractDistance(unit, 4) then
+			distance = 30
+		end
+		self:Announce(name, UnitIsDead(unit))
+		if UnitIsVisible(unit) and (distanceCache[name] or 100) then
+			distanceCache[name] = distance
+			local x, y = GetPlayerMapPosition("player")
+			self:SaveMob(GetRealZoneText(), name, x, y, UnitLevel(unit), c12n=='rareelite' and 1 or 0, UnitCreatureType(unit), GetSubZoneText())
+			self:Update()
+			if self.db.profile.notes and Cartographer_Notes and not (x == 0 and y == 0) then
+				self:SetNoteHere(name)
 			end
 		end
 	end
@@ -230,11 +227,17 @@ function SilverDragon:OnTooltipUpdate()
 end
 
 function SilverDragon:LastSeen(t)
-	if t == 0 then return L['Never'] end
+	if t == 0 then
+		return L['Never']
+	end
+
 	local lastseen
 	local currentTime = time()
 	local minutes = math.ceil((currentTime - t) / 60)
-	if minutes > 59 then
+
+	if (currentTime - t) < 60 then
+		lastseen = L["Now"]
+	elseif minutes > 59 then
 		local hours = math.ceil((currentTime - t) / 3600)
 		if hours > 23 then
 			lastseen = math.ceil((currentTime - t) / 86400)..L[" day(s)"]
@@ -244,7 +247,8 @@ function SilverDragon:LastSeen(t)
 	else
 		lastseen = minutes..L[" minute(s)"]
 	end
-	return L['Never']
+
+	return lastseen
 end
 
 function SilverDragon:OnTextUpdate()
