@@ -134,9 +134,10 @@ function SilverDragon:ToggleCartographer(enable)
 	end
 end
 
-function SilverDragon:SetNoteHere(text)
+function SilverDragon:SetNoteHere(zone, name)
 	local x,y = GetPlayerMapPosition('player')
-	Cartographer_Notes:SetNote(GetRealZoneText(), x, y, 'Rare', 'SilverDragon', 'title', text)
+	Cartographer_Notes:SetNote(GetRealZoneText(), x, y, 'Rare', 'SilverDragon', 'title', name)
+	self:Print(string.format("Cartographer note added for %s", name))
 end
 
 function SilverDragon:PLAYER_TARGET_CHANGED()
@@ -161,6 +162,16 @@ function SilverDragon:GetMobInfo(zone, name)
 	end
 end
 
+-- Function to check if the mob already exists in the data.
+function SilverDragon:MobExistsInDatabase(zone, name)
+	if self.db.profile.mobs[zone][name] then
+		return true
+	else
+		return false
+	end
+end
+
+-- Added a function to ensure a note is not added to cartographer if one already exists.
 function SilverDragon:IsRare(unit)
 	local distanceCache = {}
 	local c12n = UnitClassification(unit)
@@ -176,10 +187,11 @@ function SilverDragon:IsRare(unit)
 		if UnitIsVisible(unit) and (distanceCache[name] or 100) then
 			distanceCache[name] = distance
 			local x, y = GetPlayerMapPosition("player")
+			local mobExists = SilverDragon:MobExistsInDatabase(GetRealZoneText(), name)
 			self:SaveMob(GetRealZoneText(), name, x, y, UnitLevel(unit), c12n=='rareelite' and 1 or 0, UnitCreatureType(unit), GetSubZoneText())
 			self:Update()
-			if self.db.profile.notes and Cartographer_Notes and not (x == 0 and y == 0) then
-				self:SetNoteHere(name)
+			if self.db.profile.notes and Cartographer_Notes and not (x == 0 and y == 0) and not mobExists then
+				self:SetNoteHere(GetRealZoneText(), name)
 			end
 		end
 	end
