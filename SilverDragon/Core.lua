@@ -1,8 +1,6 @@
 local tablet = AceLibrary("Tablet-2.0")
 local L = AceLibrary("AceLocale-2.2"):new("SilverDragon")
 
-local nameplatesShowing
-
 SilverDragon = AceLibrary("AceAddon-2.0"):new("AceEvent-2.0", "AceConsole-2.0", "AceDB-2.0", "AceHook-2.1", "FuBarPlugin-2.0")
 
 SilverDragon.version = "2.0." .. string.sub("$Revision: 38392 $", 12, -3)
@@ -21,6 +19,7 @@ function SilverDragon:OnInitialize()
 		announce = {
 			chat = true,
 			error = true,
+			sound = true
 		},
 	})
 	local optionsTable = {
@@ -41,7 +40,7 @@ function SilverDragon:OnInitialize()
 						end,
 					},
 					announce = {
-						name=L["Announce"], desc=L["Display a message when a rare is detected nearby"],
+						name=L["Announce"], desc=L["Display a notification when a rare is detected"],
 						type="group", args={
 							chat = {
 								name=L["Chat"], desc=L["In the chatframe"],
@@ -54,6 +53,12 @@ function SilverDragon:OnInitialize()
 								type="toggle",
 								get=function() return self.db.profile.announce.error end,
 								set=function(t) self.db.profile.announce.error = t end,
+							},
+							sound = {
+								name=L["Sound"], desc=L["In your ears"],
+								type="toggle",
+								get=function() return self.db.profile.announce.sound end,
+								set=function(t) self.db.profile.announce.sound = t end,
 							},
 						},
 					},
@@ -95,10 +100,6 @@ function SilverDragon:OnEnable()
 		self:ScheduleRepeatingEvent('SilverDragon_Scan', self.CheckNearby, 5, self)
 	end
 	self:ToggleCartographer(self.db.profile.notes)
-	
-	self:SecureHook("ShowNameplates", function() nameplatesShowing = true; end)
-	self:SecureHook("HideNameplates", function() nameplatesShowing = false; end)
-	UpdateNameplates() -- Calling this causes ShowNameplates to be called if nameplates are showing, or HideNameplates if they aren't!
 end
 
 function SilverDragon:OnDisable()
@@ -185,18 +186,22 @@ function SilverDragon:IsRare(unit)
 end
 
 function SilverDragon:Announce(name, dead)
-	-- Announce the discovery of a rare.  Return true if we announced.
-	-- Only announce each rare every 10 minutes, preventing spam while we're in combat.
-	-- TODO: Make that time configurable.
-	if (not self.lastseen[name]) or (self.lastseen[name] < (time() - 600)) then
+	-- Announce the discovery of a rare. Return true if we announced.
+	-- Only announce each rare every minute, preventing spam while we're in combat.
+	if (not self.lastseen[name]) or (self.lastseen[name] < (time() - 60)) then
 		if self.db.profile.announce.error then
 			UIErrorsFrame:AddMessage(string.format(L["%s seen!"], name), 1, 0, 0, 1, UIERRORS_HOLD_TIME)
 			if dead then
 				UIErrorsFrame:AddMessage(L["(it's dead)"], 1, 0, 0, 1, UIERRORS_HOLD_TIME)
 			end
 		end
+
 		if self.db.profile.announce.chat then
 			self:Print(string.format(L["%s seen!"], name), dead and L["(it's dead)"] or '')
+		end
+
+		if self.db.profile.announce.sound then
+			PlaySound("AuctionWindowOpen")
 		end
 		
 		self.lastseen[name] = time()
@@ -205,20 +210,24 @@ function SilverDragon:Announce(name, dead)
 end
 
 function SilverDragon:CheckNearby()
-	if nameplatesShowing then
-		self:NameplateScan()
-	end
 	self:TargetScan()
 end
 
 function SilverDragon:OnTooltipUpdate()
 	local zone, subzone = GetRealZoneText(), GetSubZoneText()
 	cat = tablet:AddCategory('text', zone, 'columns', 5)
+	cat:AddLine(
+		'text', "Name", 'textR', 1, 'textG', 1, 'textB', 1,
+		'text2', "Level/Type", 'text2R', 1, 'text2G', 1, 'text2B', 1,
+		'text3', "Zone", 'text3R', 1, 'text3G', 1, 'text3B', 1,
+		'text4', "Last Seen", 'text4R', 1, 'text4G', 1, 'text4B', 1,
+		'text5', "Location", 'text5R', 1, 'text5G', 1, 'text5B', 1
+	)
 	for name in pairs(self.db.profile.mobs[zone]) do
 		local x,y,level,elite,ctype,csubzone,lastseen = self:GetMobInfo(zone, name)
 		cat:AddLine(
 			'text', name, 'textR', subzone == csubzone and 0 or nil, 'textG', subzone == csubzone and 1 or nil, 'textB', subzone == csubzone and 0 or nil,
-			'text2', string.format("level %s%s %s", (level and tonumber(level) > 1) and level or '?', elite==1 and '+' or '', ctype and ctype or '?'),
+			'text2', string.format("Level %s%s %s", (level and tonumber(level) > 1) and level or '?', elite==1 and '+' or '', ctype and ctype or '?'),
 			'text3', csubzone,
 			'text4', self:LastSeen(lastseen),
 			'text5', string.format("%s, %s", x, y)
@@ -269,84 +278,6 @@ end
 function SilverDragon:OnNoteTooltipLineRequest(zone, id, data, inMinimap)
 	local x,y,level,elite,ctype,csubzone,lastseen = self:GetMobInfo(zone, data.title)
 	return 'text', string.format("%s: level %s%s %s", data.title, (level and tonumber(level) > 1) and level or '?', elite==1 and '+' or '', ctype and ctype or '?')
-end
-
-------------------------
--- Nameplate Scanning --
-------------------------
-
-local worldchildren
-local nameplates = {}
-
-local function CheckForNameplate(frame)
-	-- This was mostly copied from "Nameplates - Nameplate Modifications" by Biozera.
-	-- Nameplates are unnamed children of WorldFrame.
-	-- So: drop it if it's not the right type, has a name, or we already know about it.
-	-- if frame:GetObjectType() ~= "Frame" or frame:GetName() or nameplates[frame] then
-	-- 	return
-	-- end
-	-- local name, level, bar, icon, border, glow
-	-- --for _, region in ipairs({frame:GetRegions()}) do
-	-- for i=1,frame:GetNumRegions(),1 do
-	-- 	local region = frame:GetRegions()[i]
-	-- 	if region then
-	-- 		local oType = region:GetObjectType()
-	-- 		if oType == "FontString" then
-	-- 			local point, _, relativePoint = region:GetPoint()
-	-- 			if point == "BOTTOM" and relativePoint == "CENTER" then
-	-- 				name = region
-	-- 			elseif point == "CENTER" and relativePoint == "BOTTOMRIGHT" then
-	-- 				level = region
-	-- 			end
-	-- 		elseif oType == "Texture" then
-	-- 			local path = region:GetTexture()
-	-- 			if path == "Interface\\TargetingFrame\\UI-RaidTargetingIcons" then
-	-- 				icon = region
-	-- 			elseif path == "Interface\\Tooltips\\Nameplate-Border" then
-	-- 				border = region
-	-- 			elseif path == "Interface\\Tooltips\\Nameplate-Glow" then
-	-- 				glow = region
-	-- 			end
-	-- 		end
-	-- 	end
-	-- end
-	-- for i=1,frame:GetNumChildren(),1 do
-	-- --for _, childFrame in ipairs({frame:GetChildren()}) do
-	-- 	local childFrame = frame:GetChildren()[i]
-	-- 	if childFrame:GetObjectType() == "StatusBar" then
-	-- 		bar = childFrame
-	-- 	end
-	-- end
-	-- if name and level and bar and border and glow then -- We have a nameplate!
-	-- 	nameplates[frame] = {name = name, level = level, bar = bar, border = border, glow = glow}
-	-- 	return true
-	-- end
-	return
-end
-
-function SilverDragon:NameplateScan(hideNameplates)
-	--[[if not nameplatesShowing then
-		ShowNameplates()
-		self:ScheduleEvent(self.NameplateScan, 0, self, true)
-		self:ScheduleEvent(HideNameplates, 0)
-		return
-	end--]]
-	if worldchildren ~= WorldFrame:GetNumChildren() then
-		for i=1,WorldFrame:GetNumChildren(),1 do
-			CheckForNameplate(WorldFrame:GetChildren()[i])
-		end
-		worldchildren = WorldFrame:GetNumChildren()
-	end
-	local zone = GetRealZoneText()
-	for nameplate, regions in pairs(nameplates) do
-		if nameplate:IsVisible() and self.db.profile.mobs[zone][regions.name:GetText()] then
-			self:Announce(regions.name:GetText()) -- It's probably possible to check the live-ness of a mob by examining the bar frame.  Work out how to do this.
-			break
-		end
-	end
-	--[[if hideNameplates then
-		HideNameplates()
-	end--]]
 end
 
 ---------------------
