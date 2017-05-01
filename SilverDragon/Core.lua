@@ -177,6 +177,7 @@ function SilverDragon:IsRare(unit)
 	local c12n = UnitClassification(unit)
 	if c12n == 'rare' or c12n == 'rareelite' then
 		local name = UnitName(unit)
+		local zone = GetRealZoneText()
 		local distance = 1000
 		if CheckInteractDistance(unit, 3) then
 			distance = 10
@@ -184,14 +185,14 @@ function SilverDragon:IsRare(unit)
 			distance = 30
 		end
 		self:Announce(name, UnitIsDead(unit))
-		if UnitIsVisible(unit) and (distanceCache[name] or 100) then
+		if UnitIsVisible(unit) and (distanceCache[name] or 100) and not zone == "" then
 			distanceCache[name] = distance
 			local x, y = GetPlayerMapPosition("player")
-			local mobExists = SilverDragon:MobExistsInDatabase(GetRealZoneText(), name)
-			self:SaveMob(GetRealZoneText(), name, x, y, UnitLevel(unit), c12n=='rareelite' and 1 or 0, UnitCreatureType(unit), GetSubZoneText())
+			local mobExists = SilverDragon:MobExistsInDatabase(zone, name)
+			self:SaveMob(zone, name, x, y, UnitLevel(unit), c12n=='rareelite' and 1 or 0, UnitCreatureType(unit), GetSubZoneText())
 			self:Update()
 			if self.db.profile.notes and Cartographer_Notes and not (x == 0 and y == 0) and not mobExists then
-				self:SetNoteHere(GetRealZoneText(), name)
+				self:SetNoteHere(zone, name)
 			end
 		end
 	end
