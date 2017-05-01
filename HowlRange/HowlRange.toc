@@ -5,4 +5,4 @@
 ## Author: arcynum
 ## LoadOnDemand: 0
 
-Core.lua
+HowlRange.lua
