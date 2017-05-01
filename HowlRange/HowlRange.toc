@@ -1,0 +1,8 @@
+﻿## Interface: 10500
+## Title: HowlRange
+## Notes: Whether you are in range of your pet for Furious Howl
+## Version: 1.0
+## Author: arcynum
+## LoadOnDemand: 0
+
+Core.lua
