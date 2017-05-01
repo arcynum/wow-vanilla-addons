@@ -3,9 +3,10 @@ HowlRangeFrame = CreateFrame("FRAME", "HowlRangeFrame");
 HowlRangeFrame:RegisterEvent("PLAYER_ENTERING_WORLD");
 HowlRangeFrame:RegisterEvent("PLAYER_LEAVING_WORLD");
 
-function HowlRange_OnEvent(self, event, ...)
-	print("Hello World! Hello " .. event);
-	DEFAULT_CHAT_FRAME:AddMessage("Hello World! Hello " .. event);
+function HowlRange_OnEvent(event, ...)
+	-- print("Hello World! Hello " .. event);
+	-- DEFAULT_CHAT_FRAME:AddMessage("Hello World! Hello " .. event);
+	DEFAULT_CHAT_FRAME:AddMessage("Hello world");
 end
 
 function HowlRange_OnUpdate(elapsed)
