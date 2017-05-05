@@ -78,7 +78,7 @@ function ProfessionLevel_OnShow()
     end
     
     if(ProfessionLevel_IsSkinnable()) then
-    	ProfessionLevel_AddSkinningInfo(parentFrame);
+		ProfessionLevel_AddSkinningInfo(parentFrame);
 	end
 end
 
@@ -94,24 +94,20 @@ function ProfessionLevel_GetProfessionLevel(skill)
 end
 
 function ProfessionLevel_AddMiningInfo(frame, itemname)
-    if(MINING_NODE_LEVEL[itemname]) then
-        local levelreq = MINING_NODE_LEVEL[itemname];
-        local MiningLevel = ProfessionLevel_GetProfessionLevel("Mining");
-        ProfessionLevel_AddInfo(frame, levelreq, MiningLevel, "Mining ");
-    end
+    local levelreq = MINING_NODE_LEVEL[itemname];
+    local MiningLevel = ProfessionLevel_GetProfessionLevel("Mining");
+    ProfessionLevel_AddInfo(frame, levelreq, MiningLevel, "Mining ");
 end    
 
 function ProfessionLevel_AddHerbalismInfo(frame, itemname)
-    if(HERBALISM_NODE_LEVEL[itemname]) then
-        local levelreq = HERBALISM_NODE_LEVEL[itemname];
-        local HerbalismLevel = ProfessionLevel_GetProfessionLevel("Herbalism");
-    	ProfessionLevel_AddInfo(frame, levelreq, HerbalismLevel, "Herbalism ");
-    end
+    local levelreq = HERBALISM_NODE_LEVEL[itemname];
+    local HerbalismLevel = ProfessionLevel_GetProfessionLevel("Herbalism");
+	ProfessionLevel_AddInfo(frame, levelreq, HerbalismLevel, "Herbalism ");
 end
 
 function ProfessionLevel_AddSkinningInfo(frame)
     local levelreq = 5 * UnitLevel("Mouseover");
-	-- Mob levels 10 and below are clamped to a skill level of 1
+	-- Mobs level 10 and below are clamped to a skill level of 1
     if(levelreq < 100) then levelreq = 1; end
     if(levelreq > 0) then
 		local SkinningLevel = ProfessionLevel_GetProfessionLevel("Skinning");
@@ -128,21 +124,24 @@ function ProfessionLevel_IsSkinnable()
 end
 
 function ProfessionLevel_AddInfo(frame, levelreq, proflevel, profname)
-	if(levelreq + 100 <= proflevel) then
+	if(proflevel == 0) then
+		-- Don't have profession
+		frame:AddLine(profname .. levelreq.." Required", 1, 0, 0);
+	elseif(levelreq + 100 <= proflevel) then
 		-- Grey Skill
-		frame:AddLine(profname..levelreq.."", 0.5, 0.5, 0.5);
+		frame:AddLine(profname .. levelreq, 0.5, 0.5, 0.5);
 	elseif(levelreq + 50 <= proflevel) then
 		-- Green skill
-		frame:AddLine(profname..levelreq.."", 0.25, 0.75, 0.25);
+		frame:AddLine(profname .. levelreq, 0.25, 0.75, 0.25);
 	elseif(levelreq + 25 <= proflevel) then
 		-- Yellow skill
-		frame:AddLine(profname..levelreq.."", 1, 1, 0);
+		frame:AddLine(profname .. levelreq, 1, 1, 0);
 	elseif(levelreq <= proflevel) then
 		-- Orange skill
-		frame:AddLine(profname..levelreq.."", 1, 0.5, 0.25);
+		frame:AddLine(profname .. levelreq, 1, 0.5, 0.25);
 	else
-		-- Not high enough
-		frame:AddLine(profname..levelreq.." Required", 1, 0.125, 0.125);
+		-- Skill not high enough
+		frame:AddLine(profname .. levelreq, 1, 0.125, 0.125);
 	end
 	frame:SetHeight(frame:GetHeight() + 14);
 	frame:SetWidth(190);
