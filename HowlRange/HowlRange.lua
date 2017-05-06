@@ -7,7 +7,7 @@ function HowlRange_OnEvent(event, ...)
 	-- print("Hello World! Hello " .. event);
 	-- DEFAULT_CHAT_FRAME:AddMessage("Hello World! Hello " .. event);
 	HowlRange_Print("Hello world");
-	HowlRange_Print(UnitDistanceSquared("player"))
+	HowlRange_Print(string.format("%d", IsSpellInRange(24604, "pet", "player")))
 end
 
 function HowlRange_OnUpdate(elapsed)
