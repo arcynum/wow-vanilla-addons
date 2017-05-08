@@ -2,6 +2,7 @@
     Written by Vincent of Blackhand, (copyright 2005 by D.A.Down)
 
     Version history:
+    1.1 - WoW 1.12 update, added auto-igore max level characters.
     1.0 - WoW 1.10 update.
     0.9 - WoW 1.9 update.
     0.8.1 - Added ignore and percent options.
@@ -15,6 +16,7 @@
 ]]
 
 local Server,Player,Del;
+local maxlvl = 60;
 local FCg = "|cffbbbbbb";
 local FCw = "|cffffffff";
 local FCy = "|cffffff10";
@@ -53,7 +55,14 @@ end
 
 function RestedBonus_Save(logout)
     if(Del and logout) then return; end
-    if(RestedBonus_Data[Server][Player] and RestedBonus_Data[Server][Player].lvl==0) then return; end
+    if(RestedBonus_Data[Server][Player]) then
+      if(RestedBonus_Data[Server][Player].lvl==0) then
+        return;
+      elseif(RestedBonus_Data[Server][Player].lvl>=maxlvl) then
+        RestedBonus_Data[Server][Player].lvl=0;
+        return;
+      end
+    end
     local bonus = GetXPExhaustion();
     local curXP = UnitXP("player");
     local maxXP = UnitXPMax("player");
@@ -145,7 +154,7 @@ function RestedBonus_Display(name,data)
     local pct = floor(bonus/maxBonus*RestedBonus_Percent);
     if(data.lvlXP and bonus>=data.lvlXP) then flag = '+'; end
     if(data.lvl) then
-      if(data.lvl==0) then return; end
+      if(data.lvl==0 or data.lvl>=maxlvl) then return; end
       if(data.lvlXP) then
         lvl = data.lvl+floor(10-10*data.lvlXP/data.maxXP)/10;
         lvl = format(" (%1.1f%s)",lvl,flag);

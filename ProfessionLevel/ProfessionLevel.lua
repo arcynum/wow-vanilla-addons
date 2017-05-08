@@ -1,17 +1,20 @@
-----------------------------------------------------------------
---	ProfessionLevel 1.1
---	Adds gathering profession level requirements to the tooltip
---	Original addon developed by Dae
+--[[ ProfessionLevel: Adds gathering profession level requirements to the tooltip
+Original addon developed by Dae
+Updated for WoW 1.12 by Beegee
 
---	Version 1.1
---		Fixed mining node names and levels
---		Fixed herbalism node names and levels
---		Added skill colors
---	Known issues:
---		Does not show info when mouseover multiple minimap objects at once
-----------------------------------------------------------------
+Version 1.2
+	Added limited support for lockpicking
+Version 1.1
+	Fixed mining node names and levels
+	Fixed herbalism node names and levels
+	Added skill colors
+Known issues:
+	Does not show info when mouseover multiple minimap objects at once
+	Some lockpicking skill levels are not fully accurate
+]]
 
 
+-- Mining data
 MINING_NODE_LEVEL = {
 	["Copper Vein"] = 1,
 	["Tin Vein"] = 65,
@@ -33,6 +36,7 @@ MINING_NODE_LEVEL = {
 	["Large Obsidian Chunk"] = 305
 }
 
+-- Herbalism data
 HERBALISM_NODE_LEVEL = {
 	["Peacebloom"] = 1,
 	["Silverleaf"] = 1,
@@ -64,21 +68,71 @@ HERBALISM_NODE_LEVEL = {
 	["Black Lotus"] = 300
 }
 
+-- Experimental support for Lockpicking
+-- Skill level ranges do not match other professions
+LOCKPICKING_OBJECT_LEVEL = {
+	["Ornate Bronze Lockbox"] = 1,
+	["Practice Lockbox"] = 1,
+	["Buckaneer's Strongbox"] = 1,
+	["Small Locked Chest"] = 1,
+	["Battered Junkbox"] = 1,
+	["Heavy Bronze Lockbox"] = 25,
+	["The Jewel of the Southsea"] = 25,
+	["Large Iron Bound Chest"] = 25,
+	["Iron Lockbox"] = 70,
+	["Worn Junkbox"] = 70,
+	--["Battered Footlocker"] = 70, -- Name Collison
+	--["Battered Footlocker"] = 110, -- Name Collison
+	--["Battered Footlocker"] = 150, -- Name Collison
+	--["Waterlogged Footlocker"] = 70, -- Name Collison
+	--["Waterlogged Footlocker"] = 110, -- Name Collison
+	--["Waterlogged Footlocker"] = 150, -- Name Collison
+	["Sturdy Locked Chest"] = 70,
+	["Gallywix's Lockbox"] = 70,
+	["Duskwood Chest"] = 70,
+	["Strong Iron Lockbox"] = 125,
+	["Cozzle's Footlocker"] = 160,
+	["Sturdy Junkbox"] = 175,
+	--["Mossy Footlocker"] = 175, -- Name Collison
+	--["Mossy Footlocker"] = 225, -- Name Collison
+	--["Dented Footlocker"] = 175, -- Name Collison
+	--["Dented Footlocker"] = 200, -- Name Collison
+	--["Dented Footlocker"] = 225, -- Name Collison
+	["Ironbound Locked Chest"] = 175,
+	["Large Mithril Bound Chest"] = 175,
+	["Steel Lockbox"] = 175,
+	["Reinforced Steel Lockbox"] = 225,
+	["Mithril Lockbox"] = 225,
+	["Thorium Lockbox"] = 225,
+	["Eternium Lockbox"] = 225,
+	["Cell Door"] = 250,
+	["Heavy Junkbox"] = 250,
+	["Scarlet Footlocker"] = 250,
+	["Reinforced Locked Chest"] = 250,
+	["Shadowforge Gate"] = 250,
+	["The Shadowforge Lock"] = 250,
+	["East Garrison Door"] = 250,
+	["Scholomance Door"] = 280,
+	["Service Entrance Gate"] = 300
+}
+
 function ProfessionLevel_OnShow()
     local parentFrame = this:GetParent();
     local parentFrameName = parentFrame:GetName();
-    local itemName = getglobal(parentFrameName.."TextLeft1"):GetText();
+    local itemName = getglobal(parentFrameName .. "TextLeft1"):GetText();
     
     if(MINING_NODE_LEVEL[itemName]) then
     	ProfessionLevel_AddMiningInfo(parentFrame, itemName);
-    end
-    
-    if(HERBALISM_NODE_LEVEL[itemName]) then
+    	return;
+    elseif(HERBALISM_NODE_LEVEL[itemName]) then
     	ProfessionLevel_AddHerbalismInfo(parentFrame, itemName);
-    end
-    
-    if(ProfessionLevel_IsSkinnable()) then
+    	return;
+    elseif(LOCKPICKING_OBJECT_LEVEL[itemName] and ProfessionLevel_IsPickable()) then
+		ProfessionLevel_AddLockpickingInfo(parentFrame, itemName);
+		return;
+	elseif(ProfessionLevel_IsSkinnable()) then
 		ProfessionLevel_AddSkinningInfo(parentFrame);
+		return;
 	end
 end
 
@@ -93,28 +147,6 @@ function ProfessionLevel_GetProfessionLevel(skill)
     return 0;
 end
 
-function ProfessionLevel_AddMiningInfo(frame, itemname)
-    local levelreq = MINING_NODE_LEVEL[itemname];
-    local MiningLevel = ProfessionLevel_GetProfessionLevel("Mining");
-    ProfessionLevel_AddInfo(frame, levelreq, MiningLevel, "Mining ");
-end    
-
-function ProfessionLevel_AddHerbalismInfo(frame, itemname)
-    local levelreq = HERBALISM_NODE_LEVEL[itemname];
-    local HerbalismLevel = ProfessionLevel_GetProfessionLevel("Herbalism");
-	ProfessionLevel_AddInfo(frame, levelreq, HerbalismLevel, "Herbalism ");
-end
-
-function ProfessionLevel_AddSkinningInfo(frame)
-    local levelreq = 5 * UnitLevel("Mouseover");
-	-- Mobs level 10 and below are clamped to a skill level of 1
-    if(levelreq < 100) then levelreq = 1; end
-    if(levelreq > 0) then
-		local SkinningLevel = ProfessionLevel_GetProfessionLevel("Skinning");
-    	ProfessionLevel_AddInfo(frame, levelreq, SkinningLevel, "Skinning ");
-   end 	
-end
-
 function ProfessionLevel_IsSkinnable()
     for c = 1, GameTooltip:NumLines() do
         local line = getglobal("GameTooltipTextLeft"..c);
@@ -123,27 +155,65 @@ function ProfessionLevel_IsSkinnable()
     return false;
 end
 
-function ProfessionLevel_AddInfo(frame, levelreq, proflevel, profname)
-	if(proflevel == 0) then
+function ProfessionLevel_IsPickable()
+    for c = 1, GameTooltip:NumLines() do
+        local line = getglobal("GameTooltipTextLeft"..c);
+        if(line and line:GetText() == "Locked") then return true; end
+    end
+    return false;
+end
+
+function ProfessionLevel_AddMiningInfo(frame, itemName)
+    local levelReq = MINING_NODE_LEVEL[itemName];
+    local MiningLevel = ProfessionLevel_GetProfessionLevel("Mining");
+    ProfessionLevel_AddText(frame, levelReq, MiningLevel, "Mining ");
+end    
+
+function ProfessionLevel_AddHerbalismInfo(frame, itemName)
+    local levelReq = HERBALISM_NODE_LEVEL[itemName];
+    local HerbalismLevel = ProfessionLevel_GetProfessionLevel("Herbalism");
+	ProfessionLevel_AddText(frame, levelReq, HerbalismLevel, "Herbalism ");
+end
+
+function ProfessionLevel_AddSkinningInfo(frame)
+    local levelReq = 5 * UnitLevel("Mouseover");
+	-- Mobs level 10 and below are clamped to a skill level of 1
+    if(levelReq < 100) then levelReq = 1; end
+    if(levelReq > 0) then
+		local SkinningLevel = ProfessionLevel_GetProfessionLevel("Skinning");
+    	ProfessionLevel_AddText(frame, levelReq, SkinningLevel, "Skinning ");
+   end 	
+end
+
+function ProfessionLevel_AddLockpickingInfo(frame, itemName)
+    local levelReq = LOCKPICKING_OBJECT_LEVEL[itemName];
+    if(levelReq > 0) then
+		local LockpickingLevel = ProfessionLevel_GetProfessionLevel("Lockpicking");
+    	ProfessionLevel_AddText(frame, levelReq, LockpickingLevel, "Lockpicking ");
+   end 	
+end
+
+function ProfessionLevel_AddText(frame, levelReq, profLevel, profName)
+	if(profLevel == 0) then
 		-- Don't have profession
-		frame:AddLine(profname .. levelreq.." Required", 1, 0, 0);
-	elseif(levelreq + 100 <= proflevel) then
+		frame:AddLine(profName .. levelReq .. " Required", 1, 0, 0);
+	elseif(levelReq + 100 <= profLevel) then
 		-- Grey Skill
-		frame:AddLine(profname .. levelreq, 0.5, 0.5, 0.5);
-	elseif(levelreq + 50 <= proflevel) then
+		frame:AddLine(profName .. levelReq, 0.5, 0.5, 0.5);
+	elseif(levelReq + 50 <= profLevel) then
 		-- Green skill
-		frame:AddLine(profname .. levelreq, 0.25, 0.75, 0.25);
-	elseif(levelreq + 25 <= proflevel) then
+		frame:AddLine(profName .. levelReq, 0.25, 0.75, 0.25);
+	elseif(levelReq + 25 <= profLevel) then
 		-- Yellow skill
-		frame:AddLine(profname .. levelreq, 1, 1, 0);
-	elseif(levelreq <= proflevel) then
+		frame:AddLine(profName .. levelReq, 1, 1, 0);
+	elseif(levelReq <= profLevel) then
 		-- Orange skill
-		frame:AddLine(profname .. levelreq, 1, 0.5, 0.25);
+		frame:AddLine(profName .. levelReq, 1, 0.5, 0.25);
 	else
 		-- Skill not high enough
-		frame:AddLine(profname .. levelreq, 1, 0.125, 0.125);
+		frame:AddLine(profName .. levelReq, 1, 0.125, 0.125);
 	end
 	frame:SetHeight(frame:GetHeight() + 14);
-	frame:SetWidth(190);
+	if(frame:GetWidth() < 190) then frame:SetWidth(190); end
 end
 
