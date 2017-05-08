@@ -1,6 +1,6 @@
 ## Title : ProfessionLevel
 ## Interface: 11000
-## Version: 1.1
+## Version: 1.2
 ## Author: Dae
-## Notes: Shows the minimum gathering level of profession resource nodes on mouseover.
+## Notes: Shows the minimum skill level of profession nodes and resources on mouseover.
 ProfessionLevel.xml
