@@ -1,9 +1,11 @@
 --[[ ProfessionLevel: Adds gathering profession level requirements to the tooltip
 Original addon developed by Dae
-Updated for WoW 1.12 by Beegee
+Updated and improved for WoW 1.12 by Beegee
 
 Version 1.2
 	Added limited support for lockpicking
+	Fixed level ?? Bosses incorrectly showing a skinning level of 1
+	Fixed skinning levels 11-20 showing a skinning level of 1
 Version 1.1
 	Fixed mining node names and levels
 	Fixed herbalism node names and levels
@@ -68,8 +70,8 @@ HERBALISM_NODE_LEVEL = {
 	["Black Lotus"] = 300
 }
 
--- Experimental support for Lockpicking
--- Skill level ranges do not match other professions
+-- Lockpicking data
+-- Skill level ranges do not match other professions?
 LOCKPICKING_OBJECT_LEVEL = {
 	["Ornate Bronze Lockbox"] = 1,
 	["Practice Lockbox"] = 1,
@@ -117,17 +119,17 @@ LOCKPICKING_OBJECT_LEVEL = {
 }
 
 function ProfessionLevel_OnShow()
-    local parentFrame = this:GetParent();
-    local parentFrameName = parentFrame:GetName();
-    local itemName = getglobal(parentFrameName .. "TextLeft1"):GetText();
-    
-    if(MINING_NODE_LEVEL[itemName]) then
-    	ProfessionLevel_AddMiningInfo(parentFrame, itemName);
-    	return;
-    elseif(HERBALISM_NODE_LEVEL[itemName]) then
-    	ProfessionLevel_AddHerbalismInfo(parentFrame, itemName);
-    	return;
-    elseif(LOCKPICKING_OBJECT_LEVEL[itemName] and ProfessionLevel_IsPickable()) then
+	local parentFrame = this:GetParent();
+	local parentFrameName = parentFrame:GetName();
+	local itemName = getglobal(parentFrameName .. "TextLeft1"):GetText();
+	
+	if(MINING_NODE_LEVEL[itemName]) then
+		ProfessionLevel_AddMiningInfo(parentFrame, itemName);
+		return;
+	elseif(HERBALISM_NODE_LEVEL[itemName]) then
+		ProfessionLevel_AddHerbalismInfo(parentFrame, itemName);
+		return;
+	elseif(LOCKPICKING_OBJECT_LEVEL[itemName] and ProfessionLevel_IsPickable()) then
 		ProfessionLevel_AddLockpickingInfo(parentFrame, itemName);
 		return;
 	elseif(ProfessionLevel_IsSkinnable()) then
@@ -137,60 +139,64 @@ function ProfessionLevel_OnShow()
 end
 
 function ProfessionLevel_GetProfessionLevel(skill)
-    local numskills = GetNumSkillLines();
-    for c = 1, numskills do
-        local skillname, _, _, skillrank = GetSkillLineInfo(c);
-        if(skillname == skill) then
-            return skillrank;
-        end     
-    end
-    return 0;
+	local numskills = GetNumSkillLines();
+	for c = 1, numskills do
+		local skillname, _, _, skillrank = GetSkillLineInfo(c);
+		if(skillname == skill) then
+			return skillrank;
+		end	 
+	end
+	return 0;
 end
 
 function ProfessionLevel_IsSkinnable()
-    for c = 1, GameTooltip:NumLines() do
-        local line = getglobal("GameTooltipTextLeft"..c);
-        if(line and line:GetText() == "Skinnable") then return true; end
-    end
-    return false;
+	for c = 1, GameTooltip:NumLines() do
+		local line = getglobal("GameTooltipTextLeft"..c);
+		if(line and line:GetText() == "Skinnable") then return true; end
+	end
+	return false;
 end
 
 function ProfessionLevel_IsPickable()
-    for c = 1, GameTooltip:NumLines() do
-        local line = getglobal("GameTooltipTextLeft"..c);
-        if(line and line:GetText() == "Locked") then return true; end
-    end
-    return false;
+	for c = 1, GameTooltip:NumLines() do
+		local line = getglobal("GameTooltipTextLeft"..c);
+		if(line and line:GetText() == "Locked") then return true; end
+	end
+	return false;
 end
 
 function ProfessionLevel_AddMiningInfo(frame, itemName)
-    local levelReq = MINING_NODE_LEVEL[itemName];
-    local MiningLevel = ProfessionLevel_GetProfessionLevel("Mining");
-    ProfessionLevel_AddText(frame, levelReq, MiningLevel, "Mining ");
-end    
+	local levelReq = MINING_NODE_LEVEL[itemName];
+	local MiningLevel = ProfessionLevel_GetProfessionLevel("Mining");
+	ProfessionLevel_AddText(frame, levelReq, MiningLevel, "Mining ");
+end	
 
 function ProfessionLevel_AddHerbalismInfo(frame, itemName)
-    local levelReq = HERBALISM_NODE_LEVEL[itemName];
-    local HerbalismLevel = ProfessionLevel_GetProfessionLevel("Herbalism");
+	local levelReq = HERBALISM_NODE_LEVEL[itemName];
+	local HerbalismLevel = ProfessionLevel_GetProfessionLevel("Herbalism");
 	ProfessionLevel_AddText(frame, levelReq, HerbalismLevel, "Herbalism ");
 end
 
-function ProfessionLevel_AddSkinningInfo(frame)
-    local levelReq = 5 * UnitLevel("Mouseover");
-	-- Mobs level 10 and below are clamped to a skill level of 1
-    if(levelReq < 100) then levelReq = 1; end
-    if(levelReq > 0) then
-		local SkinningLevel = ProfessionLevel_GetProfessionLevel("Skinning");
-    	ProfessionLevel_AddText(frame, levelReq, SkinningLevel, "Skinning ");
-   end 	
+-- Experimental support for Lockpicking
+function ProfessionLevel_AddLockpickingInfo(frame, itemName)
+	local levelReq = LOCKPICKING_OBJECT_LEVEL[itemName];
+	local LockpickingLevel = ProfessionLevel_GetProfessionLevel("Lockpicking");
+	ProfessionLevel_AddText(frame, levelReq, LockpickingLevel, "Lockpicking ");
 end
 
-function ProfessionLevel_AddLockpickingInfo(frame, itemName)
-    local levelReq = LOCKPICKING_OBJECT_LEVEL[itemName];
-    if(levelReq > 0) then
-		local LockpickingLevel = ProfessionLevel_GetProfessionLevel("Lockpicking");
-    	ProfessionLevel_AddText(frame, levelReq, LockpickingLevel, "Lockpicking ");
-   end 	
+function ProfessionLevel_AddSkinningInfo(frame)
+	local levelReq = UnitLevel("Mouseover");
+	-- Bosses have a level of -1; actual skill required is max + 15
+	if(levelReq == -1) then levelReq = 315;
+	-- Mobs level 10 and below are clamped to a skill level of 1
+	elseif(levelReq <= 10) then levelReq = 1;
+	-- Mobs level 11-20 increase by 10 skill per level until 100
+	elseif(levelReq <= 20) then levelReq = levelReq * 10 - 100;
+	else levelReq = levelReq * 5; end
+	if(levelReq > 0) then
+		local SkinningLevel = ProfessionLevel_GetProfessionLevel("Skinning");
+		ProfessionLevel_AddText(frame, levelReq, SkinningLevel, "Skinning ");
+	end 	
 end
 
 function ProfessionLevel_AddText(frame, levelReq, profLevel, profName)
