@@ -23,13 +23,13 @@ OmniCC = {
 local function GetFormattedTime(time)
 	--day
 	if (time >= 86400) then
-		return ( math.floor((time / 86400 + 0.5)) .. DAY_ONELETTER_ABBR ), 0.6, OmniCC.long.r, OmniCC.long.g, OmniCC.long.b, math.mod(time, 86400);
+		return (string.format(DAY_ONELETTER_ABBR, math.floor((time / 86400 + 0.5)))), 0.6, OmniCC.long.r, OmniCC.long.g, OmniCC.long.b, math.mod(time, 86400);
 	--hour
 	elseif (time >= 3600) then
-		return ( math.floor((time / 3600 + 0.5)) .. HOUR_ONELETTER_ABBR ), 0.6, OmniCC.long.r, OmniCC.long.g, OmniCC.long.b, math.mod(time, 3600);
+		return (string.format(HOUR_ONELETTER_ABBR, math.floor((time / 3600 + 0.5)))), 0.6, OmniCC.long.r, OmniCC.long.g, OmniCC.long.b, math.mod(time, 3600);
 	--minute
 	elseif (time >= 60) then
-		return ( math.floor((time / 60 + 0.5)) .. MINUTE_ONELETTER_ABBR ), 0.8, OmniCC.long.r, OmniCC.long.g, OmniCC.long.b, math.mod(time, 60);
+		return (string.format(MINUTE_ONELETTER_ABBR, math.floor((time / 60 + 0.5)))), 0.8, OmniCC.long.r, OmniCC.long.g, OmniCC.long.b, math.mod(time, 60);
 	--second, more than 5 seconds left
 	elseif (time > 5) then
 		return math.floor(time + 1), 1.0, OmniCC.medium.r, OmniCC.medium.g, OmniCC.medium.b, 0.2;

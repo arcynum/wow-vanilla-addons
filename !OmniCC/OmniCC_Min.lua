@@ -15,11 +15,11 @@ OmniCC = {
 --returns the formatted time with the appropiate scale and color
 local function GetFormattedTime(time)
 	if (time > 86400) then
-		return ( math.floor((time / 86400 + 1)) .. DAY_ONELETTER_ABBR );
+		return (string.format(DAY_ONELETTER_ABBR, math.floor((time / 86400 + 1))));
 	elseif (time >= 3600) then
-		return ( math.floor((time / 3600 + 1)) .. HOUR_ONELETTER_ABBR );
+		return (string.format(HOUR_ONELETTER_ABBR, math.floor((time / 3600 + 1))));
 	elseif (time >= 60) then
-		return ( math.floor((time / 60 + 1)) .. MINUTE_ONELETTER_ABBR );
+		return (string.format(MINUTE_ONELETTER_ABBR, math.floor((time / 60 + 1))));
 	elseif (time > 5) then
 		return math.floor(time + 1);
 	end
