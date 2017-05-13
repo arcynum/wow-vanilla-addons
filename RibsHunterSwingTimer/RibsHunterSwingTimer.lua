@@ -1,4 +1,4 @@
-﻿local G_AddOn = "rais_AutoShot"
+﻿local G_AddOn = "RibsHunterSwingTimer"
 
 -- Load the textures.
 local Textures = {

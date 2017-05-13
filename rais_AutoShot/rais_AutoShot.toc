@@ -1,5 +1,0 @@
-## Interface: 11200
-## Title: rais_AutoShot
-## Notes: [1.12.1]
-## Author: raisnilt
-rais_AutoShot.lua
