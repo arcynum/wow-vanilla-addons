@@ -39,13 +39,14 @@ CoreCastSpellByName = CastSpellByName;
 local Frame = CreateFrame("Frame");
 
 -- Register the events we care about.
-Frame:RegisterAllEvents();
 Frame:RegisterEvent("PLAYER_LOGIN");
 Frame:RegisterEvent("SPELLCAST_STOP");
 Frame:RegisterEvent("CURRENT_SPELL_CAST_CHANGED");
 Frame:RegisterEvent("START_AUTOREPEAT_SPELL");
 Frame:RegisterEvent("STOP_AUTOREPEAT_SPELL");
 Frame:RegisterEvent("ITEM_LOCK_CHANGED");
+Frame:RegisterEvent("PLAYER_REGEN_DISABLED");
+Frame:RegisterEvent("PLAYER_REGEN_ENABLED");
 
 -- Aimed tooltip frame.
 local AimedTooltipFrame = CreateFrame("GameTooltip", "AimedTooltipFrame", UIParent, "GameTooltipTemplate");
@@ -152,7 +153,6 @@ end
 
 -- Function to manage cast updates.
 local function Cast_Update()
-	AutoShotTimerFrame:SetAlpha(1);
 	local relative = GetTime() - G_CastStart
 	if (relative > G_CastTime) then
 		G_CastStart = false;
@@ -165,7 +165,6 @@ end
 -- Function to manage cast interrupts.
 local function Cast_Interrupted()
 	Debug("Cast_Interrupted");
-	AutoShotTimerFrame:SetAlpha(0);
 	G_SwingStart = false;
 	Cast_Start();
 end
@@ -180,9 +179,6 @@ end
 -- Function to manage auto shot ending.
 local function Shot_End()
 	Debug("Shot_End");
-	if (G_SwingStart == false) then
-		AutoShotTimerFrame:SetAlpha(0);
-	end
 	G_CastStart = false;
 	G_Shooting = false;
 end
@@ -208,11 +204,6 @@ local function Aimed_Start()
 	Debug("Aimed_Start");
 
 	G_AimedStart = GetTime();
-
-	if (G_SwingStart == false) then
-		AutoShotTimerFrame:SetAlpha(0);
-	end
-
 	G_CastStart = false;
 
 	for i = 1, 32 do
@@ -296,7 +287,6 @@ local function ItemLockChanged()
 	if (G_Shooting == true) then 
 		CheckGlobalCD();
 		if (G_AimedStart ~= false) then
-			AutoShotTimerFrame:SetAlpha(1);
 			Cast_Start();
 		elseif (G_SpellCoolDown ~= 1.5) then
 			Swing_Start();
@@ -323,6 +313,18 @@ local function UnitAura()
 			G_BerserkValue = false;
 		end
 	end
+end
+
+-- Function which is called when combat starts
+local function CombatStarted()
+	Debug("CombatStarted");
+	AutoShotTimerFrame:SetAlpha(1);
+end
+
+-- Function which is called when combat ends
+local function CombatEnded()
+	Debug("CombatEnded");
+	AutoShotTimerFrame:SetAlpha(0);
 end
 
 -- Handle the OnEvent callbacks.
@@ -354,6 +356,12 @@ local function AutoShotOnEvent()
 	-- Capture the unit aura event.
 	elseif (event == "UNIT_AURA") then
 		UnitAura();
+
+	elseif (event == "PLAYER_REGEN_DISABLED") then
+		CombatStarted();
+
+	elseif (event == "PLAYER_REGEN_ENABLED") then
+		CombatEnded();
 
 	end
 end
@@ -389,7 +397,6 @@ local function AutoShotOnUpdate()
 				Cast_Start();
 			else
 				AutoShotOverlayTexture:SetWidth(0);
-				AutoShotTimerFrame:SetAlpha(0);
 			end
 			G_SwingStart = false;
 		end
