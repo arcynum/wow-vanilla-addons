@@ -406,5 +406,5 @@ local function AutoShotOnUpdate()
 end
 
 -- Register the frame to handle the event and update events.
-Frame:SetScript("OnEvent", AutoShotOnEvent())
-Frame:SetScript("OnUpdate", AutoShotOnUpdate())
+Frame:SetScript("OnEvent", AutoShotOnEvent);
+Frame:SetScript("OnUpdate", AutoShotOnUpdate);
