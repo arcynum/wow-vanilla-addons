@@ -29,6 +29,7 @@ local G_SpellCoolDown = 0,0;
 local G_OldSpellStartTime;
 local G_AimedShotId = 0;
 local G_AimedShotCastTime = 3;
+local G_InCombat = false;
 
 -- Override the real interface functions to handle handle extra tasks.
 CoreUseAction = UseAction;
@@ -318,23 +319,39 @@ end
 -- Function which is called when combat starts
 local function CombatStarted()
 	Debug("CombatStarted");
+	G_InCombat = true;
 	AutoShotTimerFrame:SetAlpha(1);
 end
 
 -- Function which is called when combat ends
 local function CombatEnded()
 	Debug("CombatEnded");
+	G_InCombat = false;
 	AutoShotTimerFrame:SetAlpha(0);
 end
 
 -- Handle the OnEvent callbacks.
 local function AutoShotOnEvent()
+
 	-- Capture the player login event.
 	if (event == "PLAYER_LOGIN") then
 		PlayerLogin();
 
+	elseif (event == "PLAYER_REGEN_DISABLED") then
+		CombatStarted();
+
+	elseif (event == "PLAYER_REGEN_ENABLED") then
+		CombatEnded();
+		
+	end
+
+	-- Only want the other events if we're in combat.
+	if (G_InCombat) then
+		return;
+	end
+
 	-- Capture the auto shot starting.
-	elseif (event == "START_AUTOREPEAT_SPELL") then
+	if (event == "START_AUTOREPEAT_SPELL") then
 		Shot_Start();
 
 	-- Capture the auto shot ending.
@@ -356,13 +373,6 @@ local function AutoShotOnEvent()
 	-- Capture the unit aura event.
 	elseif (event == "UNIT_AURA") then
 		UnitAura();
-
-	elseif (event == "PLAYER_REGEN_DISABLED") then
-		CombatStarted();
-
-	elseif (event == "PLAYER_REGEN_ENABLED") then
-		CombatEnded();
-
 	end
 end
 
