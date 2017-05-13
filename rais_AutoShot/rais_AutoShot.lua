@@ -343,15 +343,8 @@ local function AutoShotOnEvent()
 	elseif (event == "PLAYER_REGEN_ENABLED") then
 		CombatEnded();
 
-	end
-
-	-- Only want the other events if we're in combat.
-	if (G_InCombat == false) then
-		return;
-	end
-
 	-- Capture the auto shot starting.
-	if (event == "START_AUTOREPEAT_SPELL") then
+	elseif (event == "START_AUTOREPEAT_SPELL") then
 		Shot_Start();
 
 	-- Capture the auto shot ending.
