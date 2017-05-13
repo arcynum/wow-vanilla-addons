@@ -204,28 +204,29 @@ local function Aimed_Start()
 	Debug("Aimed_Start");
 
 	-- Check if Aimed Shot is still on cooldown.
-	G_SpellStartTime, G_SpellCoolDown = GetSpellCooldown(G_AimedShotId, "BOOKTYPE_SPELL")
-	if (G_SpellStartTime ~= 0) then
-		return;
-	end
+	local aimedShotId = FindSpellIdByName("Aimed Shot");
+	local startTime, cooldown = GetSpellCooldown(aimedShotId, "BOOKTYPE_SPELL");
 
-	G_AimedStart = GetTime();
-	G_CastStart = false;
+	if (startTime == 0 and cooldown == 0) then
+		G_AimedStart = GetTime();
+		G_CastStart = false;
 
-	for i = 1, 32 do
-		if UnitBuff("player", i) == "Interface\\Icons\\Ability_Warrior_InnerRage" then
-			G_AimedShotCastTime = G_AimedShotCastTime / 1.3;
-		end
-		if UnitBuff("player", i) == "Interface\\Icons\\Ability_Hunter_RunningShot" then
-			G_AimedShotCastTime = G_AimedShotCastTime / 1.4;
-		end
-		if UnitBuff("player", i) == "Interface\\Icons\\Racial_Troll_Berserk" then
-			G_AimedShotCastTime = G_AimedShotCastTime / (1 + G_BerserkValue);
-		end
-		if UnitBuff("player", i) == "Interface\\Icons\\Inv_Trinket_Naxxramas04" then
-			G_AimedShotCastTime = G_AimedShotCastTime / 1.2;
+		for i = 1, 32 do
+			if UnitBuff("player", i) == "Interface\\Icons\\Ability_Warrior_InnerRage" then
+				G_AimedShotCastTime = G_AimedShotCastTime / 1.3;
+			end
+			if UnitBuff("player", i) == "Interface\\Icons\\Ability_Hunter_RunningShot" then
+				G_AimedShotCastTime = G_AimedShotCastTime / 1.4;
+			end
+			if UnitBuff("player", i) == "Interface\\Icons\\Racial_Troll_Berserk" then
+				G_AimedShotCastTime = G_AimedShotCastTime / (1 + G_BerserkValue);
+			end
+			if UnitBuff("player", i) == "Interface\\Icons\\Inv_Trinket_Naxxramas04" then
+				G_AimedShotCastTime = G_AimedShotCastTime / 1.2;
+			end
 		end
 	end
+	
 end
 
 -- Function which override the UseAction function.
@@ -249,7 +250,7 @@ function CastSpell(spellID, spellTab)
 	if (spellID == G_AimedShotId and spellTab == "BOOKTYPE_SPELL") then
 		Aimed_Start();
 	end
-	CoreCastSpell(spellID,spellTab);
+	CoreCastSpell(spellID, spellTab);
 end
 
 -- Function which override the CastSpellByName function.
