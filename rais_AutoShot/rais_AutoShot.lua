@@ -211,8 +211,13 @@ local function AutoShotOnUpdate()
 
 		-- Set the texture to be a percent of the swing.
 		AutoShotOverlayTexture:SetWidth(Table["Width"] * relative / G_SwingTime);
+
 		-- If the time since the swing started is now longer than the swing start time.
 		if (relative > G_SwingTime) then
+
+			Debug(relative);
+			Debug(G_SwingTime);
+
 			AutoShotOverlayTexture:SetWidth(0);
 			G_SwingStart = false;
 		end
