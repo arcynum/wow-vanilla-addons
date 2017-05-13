@@ -1,4 +1,5 @@
 ## Interface: 11200
 ## Title: RibsHunterSwingTimer
 ## Author: arcynum
+## Comments: Originally called rais, this didn't really meet my needs. Adjusted and rewrote to be more what I needed.
 RibsHunterSwingTimer.lua

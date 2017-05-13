@@ -14,7 +14,7 @@ local Table = {
 }
 
 -- General global variables.
-local DEBUG = true;
+local DEBUG = false;
 local G_SwingStart = false;
 local G_Shooting = false;
 local G_PosX, G_PosY;
@@ -97,6 +97,7 @@ local function CreateAutoShotBar()
 	AutoShotFontString:SetWidth(Table["Width"]);
 	AutoShotFontString:SetHeight(Table["Height"]);
 	AutoShotFontString:SetFont(STANDARD_TEXT_FONT, 10, "OUTLINE");
+	AutoShotFontString:SetTextColor(1.0, 1.0, 1.0, 1.0);
 
 	-- Create the background texture.
 	local AutoShotArtworkTexture = AutoShotTimerFrame:CreateTexture(nil, "ARTWORK");
@@ -120,21 +121,23 @@ local function CreateAutoShotBar()
 end
 
 -- Function to manage auto shot starting.
-local function Shot_Start()
+local function ShotStart()
 	Debug("Shot Start");
 	G_Shooting = true;
 end
 
 -- Function to manage auto shot ending.
-local function Shot_End()
+local function ShotEnd()
 	Debug("Shot End");
 	G_Shooting = false;
+	AutoShotFontString:SetText("");
+	AutoShotFontString:SetTextColor(1.0, 1.0, 1.0, 1.0);
 end
 
 -- Function to manage swing starting.
 -- This makes the bar red. Meaning that the swing has started.
-local function Swing_Start()
-	Debug("Swing_Start");
+local function SwingStart()
+	Debug("Swing Start");
 	G_SwingTime = UnitRangedDamage("player");
 	AutoShotOverlayTexture:SetVertexColor(1, 1, 1);
 	G_SwingStart = GetTime();
@@ -149,20 +152,20 @@ end
 -- Function to handle the item lock changed event.
 local function ItemLockChanged()
 	if (G_Shooting == true) then
-		Swing_Start();
+		SwingStart();
 	end
 end
 
 -- Function which is called when combat starts
 local function CombatStarted()
-	Debug("CombatStarted");
+	Debug("Combat Started");
 	G_InCombat = true;
 	AutoShotTimerFrame:SetAlpha(1);
 end
 
 -- Function which is called when combat ends
 local function CombatEnded()
-	Debug("CombatEnded");
+	Debug("Combat Ended");
 	G_InCombat = false;
 	AutoShotTimerFrame:SetAlpha(0);
 end
@@ -182,11 +185,11 @@ local function AutoShotOnEvent()
 
 	-- Capture the auto shot starting.
 	elseif (event == "START_AUTOREPEAT_SPELL") then
-		Shot_Start();
+		ShotStart();
 
 	-- Capture the auto shot ending.
 	elseif (event == "STOP_AUTOREPEAT_SPELL") then
-		Shot_End();
+		ShotEnd();
 
 	-- Capture the item lock changed event.
 	elseif (event == "ITEM_LOCK_CHANGED") then
@@ -203,9 +206,11 @@ local function AutoShotOnUpdate()
 		-- Get the time since the swing started.
 		local relative = GetTime() - G_SwingStart;
 
-		if (relative <= 500) then
+		if (relative <= 0.5) then
+			AutoShotFontString:SetTextColor(0, 1.0, 0, 1.0);
 			AutoShotFontString:SetText("Aimed Shot Now");
 		else
+			AutoShotFontString:SetTextColor(1.0, 0, 0, 1.0);
 			AutoShotFontString:SetText("Wait");
 		end
 
@@ -214,10 +219,6 @@ local function AutoShotOnUpdate()
 
 		-- If the time since the swing started is now longer than the swing start time.
 		if (relative > G_SwingTime) then
-
-			Debug(relative);
-			Debug(G_SwingTime);
-
 			AutoShotOverlayTexture:SetWidth(0);
 			G_SwingStart = false;
 		end
