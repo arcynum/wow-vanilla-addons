@@ -7,10 +7,9 @@
 		--> reportolva van már nostalrius bugtrackeren, ha fixelik cseréljem le "SPELLCAST_STOP"-ra 
 		--> https://report.nostalrius.org/plugins/tracker/?aid=310
 ]]
+
 local AddOn = "rais_AutoShot"
 local _G = getfenv(0)
-
-
 
 local Textures = {
 	Bar = "Interface\\AddOns\\"..AddOn.."\\Textures\\Bar.tga",
@@ -88,8 +87,6 @@ local function GlobalCD_Check()
 		end
 	end
 end
-
-
 
 local function Cast_Start()
 	_G[AddOn.."_Texture_Timer"]:SetVertexColor(1,0,0);
@@ -231,7 +228,6 @@ function CastSpellByName(spellName)
 end
 
 
-
 local Frame = CreateFrame("Frame");
 Frame:RegisterAllEvents()
 Frame:RegisterEvent("PLAYER_LOGIN")
@@ -240,6 +236,8 @@ Frame:RegisterEvent("CURRENT_SPELL_CAST_CHANGED")
 Frame:RegisterEvent("START_AUTOREPEAT_SPELL")
 Frame:RegisterEvent("STOP_AUTOREPEAT_SPELL")
 Frame:RegisterEvent("ITEM_LOCK_CHANGED")
+
+
 Frame:SetScript("OnEvent",function()
 	if ( event == "PLAYER_LOGIN" ) then
 		AutoShotBar_Create();
@@ -321,6 +319,8 @@ Frame:SetScript("OnEvent",function()
 		end
 	end
 end)
+
+
 Frame:SetScript("OnUpdate",function()
 	if ( shooting == true ) then
 		if ( castStart ~= false ) then
