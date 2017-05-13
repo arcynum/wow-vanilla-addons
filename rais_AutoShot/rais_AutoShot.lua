@@ -61,7 +61,7 @@ local AutoShotOverlayTexture;
 -- Debug function
 local function Debug(message)
 	if (DEBUG == true) then
-		DEFAULT_CHAT_FRAME:AddMessage("|cff0000ff"..message);
+		DEFAULT_CHAT_FRAME:AddMessage("|cffff0000"..message);
 	end
 end
 
