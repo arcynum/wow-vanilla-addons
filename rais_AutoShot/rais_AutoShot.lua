@@ -203,6 +203,12 @@ end
 local function Aimed_Start()
 	Debug("Aimed_Start");
 
+	-- Check if Aimed Shot is still on cooldown.
+	G_SpellStartTime, G_SpellCoolDown = GetSpellCooldown(G_AimedShotId, "BOOKTYPE_SPELL")
+	if (G_SpellStartTime ~= 0) then
+		return;
+	end
+
 	G_AimedStart = GetTime();
 	G_CastStart = false;
 
