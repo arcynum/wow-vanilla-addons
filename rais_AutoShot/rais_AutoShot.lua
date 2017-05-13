@@ -136,7 +136,6 @@ end
 local function Swing_Start()
 	Debug("Swing_Start");
 	G_SwingTime = UnitRangedDamage("player");
-	AutoShotFontString:SetText("Swinging");
 	AutoShotOverlayTexture:SetVertexColor(1, 1, 1);
 	G_SwingStart = GetTime();
 end
@@ -192,6 +191,8 @@ local function AutoShotOnEvent()
 	-- Capture the item lock changed event.
 	elseif (event == "ITEM_LOCK_CHANGED") then
 		ItemLockChanged();
+
+	end
 end
 
 -- Handle the OnEvent callbacks.
@@ -201,6 +202,13 @@ local function AutoShotOnUpdate()
 	if (G_SwingStart ~= false) then
 		-- Get the time since the swing started.
 		local relative = GetTime() - G_SwingStart;
+
+		if (relative <= 500) then
+			AutoShotFontString:SetText("Aimed Shot Now");
+		else
+			AutoShotFontString:SetText("Wait");
+		end
+
 		-- Set the texture to be a percent of the swing.
 		AutoShotOverlayTexture:SetWidth(Table["Width"] * relative / G_SwingTime);
 		-- If the time since the swing started is now longer than the swing start time.
