@@ -9,7 +9,7 @@ local Textures = {
 local Table = {
 	["posX"] = 0;
 	["posY"] = -235;
-	["Width"] = 100;
+	["Width"] = 200;
 	["Height"] = 15;
 }
 
@@ -226,7 +226,7 @@ local function Aimed_Start()
 			end
 		end
 	end
-	
+
 end
 
 -- Function which override the UseAction function.
