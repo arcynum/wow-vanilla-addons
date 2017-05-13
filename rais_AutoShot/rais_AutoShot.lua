@@ -158,7 +158,6 @@ local function Cast_Update()
 	if (relative > G_CastTime) then
 		G_CastStart = false;
 	elseif (G_SwingStart == false) then
-		-- AutoShotOverlayTexture:SetWidth(Table["Width"] * relative / G_CastTime);
 		AutoShotOverlayTexture:SetWidth(Table["Width"] * relative / G_CastTime);
 	end
 end
@@ -209,16 +208,16 @@ local function Aimed_Start()
 
 	for i = 1, 32 do
 		if UnitBuff("player", i) == "Interface\\Icons\\Ability_Warrior_InnerRage" then
-			G_AimedShotCastTime = G_AimedShotCastTime / 1.3
+			G_AimedShotCastTime = G_AimedShotCastTime / 1.3;
 		end
 		if UnitBuff("player", i) == "Interface\\Icons\\Ability_Hunter_RunningShot" then
-			G_AimedShotCastTime = G_AimedShotCastTime / 1.4
+			G_AimedShotCastTime = G_AimedShotCastTime / 1.4;
 		end
 		if UnitBuff("player", i) == "Interface\\Icons\\Racial_Troll_Berserk" then
-			G_AimedShotCastTime = G_AimedShotCastTime / (1 + G_BerserkValue)
+			G_AimedShotCastTime = G_AimedShotCastTime / (1 + G_BerserkValue);
 		end
 		if UnitBuff("player", i) == "Interface\\Icons\\Inv_Trinket_Naxxramas04" then
-			G_AimedShotCastTime = G_AimedShotCastTime / 1.2
+			G_AimedShotCastTime = G_AimedShotCastTime / 1.2;
 		end
 	end
 end
@@ -305,7 +304,7 @@ local function UnitAura()
 		if (UnitBuff("player", i) == "Interface\\Icons\\Racial_Troll_Berserk") then
 			if (G_BerserkValue == false) then
 				if ((UnitHealth("player") / UnitHealthMax("player")) >= 0.40) then
-					G_BerserkValue = (1.30 - (UnitHealth("player")/UnitHealthMax("player"))) / 3;
+					G_BerserkValue = (1.30 - (UnitHealth("player") / UnitHealthMax("player"))) / 3;
 				else
 					G_BerserkValue = 0.30;
 				end
@@ -391,7 +390,6 @@ local function AutoShotOnUpdate()
 		-- Get the time since the swing started.
 		local relative = GetTime() - G_SwingStart;
 		-- Set the texture to be a percent of the swing.
-		-- AutoShotOverlayTexture:SetWidth(Table["Width"] - (Table["Width"] * relative / G_SwingTime));
 		AutoShotOverlayTexture:SetWidth(Table["Width"] * relative / G_SwingTime);
 		-- If the time since the swing started is now longer than the swing start time.
 		if (relative > G_SwingTime) then
