@@ -1,19 +1,11 @@
-﻿--[[ 
-	#1 Cast_Interrupt reset
+﻿local G_AddOn = "rais_AutoShot"
 
-
-	# Nostalrius Bug
-		--> "ITEM_LOCK CHANGED" van a "SPELLCAST_STOP" helyett 
-		--> reportolva van már nostalrius bugtrackeren, ha fixelik cseréljem le "SPELLCAST_STOP"-ra 
-		--> https://report.nostalrius.org/plugins/tracker/?aid=310
-]]
-
-local AddOn = "rais_AutoShot"
-local _G = getfenv(0)
-
+-- Load the textures.
 local Textures = {
-	Bar = "Interface\\AddOns\\"..AddOn.."\\Textures\\Bar.tga",
+	Bar = "Interface\\AddOns\\"..G_AddOn.."\\Textures\\Bar.tga",
 }
+
+-- Create a lookup table of positions and widths.
 local Table = {
 	["posX"] = 0;
 	["posY"] = -235;
@@ -21,167 +13,211 @@ local Table = {
 	["Height"] = 15;
 }
 
+-- General global variables.
+local DEBUG = true;
+local G_AimedCastBar = true;
+local G_CastStart = false;
+local G_SwingStart = false;
+local G_AimedStart = false;
+local G_Shooting = false;
+local G_PosX, G_PosY;
+local G_InterruptTime;
+local G_CastTime = 0.65;
+local G_SwingTime;
+local G_BerserkValue = false;
+local G_SpellStartTime;
+local G_SpellCoolDown = 0,0;
+local G_OldSpellStartTime;
+local G_AimedShotId = 0;
+local G_AimedShotCastTime = 3;
 
-local AimedCastBar = true; -- true / false
+-- Override the real interface functions to handle handle extra tasks.
+CoreUseAction = UseAction;
+CoreCastSpell = CastSpell;
+CoreCastSpellByName = CastSpellByName;
 
+-- Core addon frame.
+local Frame = CreateFrame("Frame");
 
-local castStart = false;
-local swingStart = false;
-local aimedStart = false;
-local shooting = false; -- player adott pillantban lő-e
-local posX, posY -- player position when starts Casting
-local interruptTime -- Concussive shot miatt
-local castTime = 0.65
-local swingTime
-local berserkValue = false
+-- Register the events we care about.
+Frame:RegisterAllEvents();
+Frame:RegisterEvent("PLAYER_LOGIN");
+Frame:RegisterEvent("SPELLCAST_STOP");
+Frame:RegisterEvent("CURRENT_SPELL_CAST_CHANGED");
+Frame:RegisterEvent("START_AUTOREPEAT_SPELL");
+Frame:RegisterEvent("STOP_AUTOREPEAT_SPELL");
+Frame:RegisterEvent("ITEM_LOCK_CHANGED");
 
+-- Aimed tooltip frame.
+local AimedTooltipFrame = CreateFrame("GameTooltip", "AimedTooltipFrame", UIParent, "GameTooltipTemplate");
+AimedTooltipFrame:SetOwner(UIParent, "ANCHOR_NONE");
 
+-- Extra frames.
+local AutoShotTimerFrame;
 
-local function AutoShotBar_Create()
-	Table["posX"] = Table["posX"] *GetScreenWidth() /1000;
-	Table["posY"] = Table["posY"] *GetScreenHeight() /1000;
-	Table["Width"] = Table["Width"] *GetScreenWidth() /1000;
-	Table["Height"] = Table["Height"] *GetScreenHeight() /1000;
+-- Textures
+local AutoShotOverlayTexture;
 
-	_G[AddOn.."_Frame_Timer"] = CreateFrame("Frame",nil,UIParent);
-	local Frame = _G[AddOn.."_Frame_Timer"];
-	Frame:SetFrameStrata("HIGH");
-	Frame:SetWidth(Table["Width"]);
-	Frame:SetHeight(Table["Height"]);
-	Frame:SetPoint("CENTER",UIParent,"CENTER",Table["posX"],Table["posY"]);
-	Frame:SetAlpha(0);
-
-	_G[AddOn.."_Texture_Timer"] = Frame:CreateTexture(nil,"OVERLAY");
-	local Bar = _G[AddOn.."_Texture_Timer"];
-	Bar:SetHeight(Table["Height"]);
-	Bar:SetTexture(Textures.Bar);
-	Bar:SetPoint("CENTER",Frame,"CENTER");
-
-	local Background = Frame:CreateTexture(nil,"ARTWORK");
-	Background:SetTexture(15/100, 15/100, 15/100, 1);
-	Background:SetAllPoints(Frame);
-	
-	local Border = Frame:CreateTexture(nil,"BORDER");
-	Border:SetPoint("CENTER",Frame,"CENTER");
-	Border:SetWidth(Table["Width"] +3);
-	Border:SetHeight(Table["Height"] +3);
-	Border:SetTexture(0,0,0);
-	
-	local Border = Frame:CreateTexture(nil,"BACKGROUND");
-	Border:SetPoint("CENTER",Frame,"CENTER");
-	Border:SetWidth(Table["Width"] +6);
-	Border:SetHeight(Table["Height"] +6);
-	Border:SetTexture(1,1,1);
+-- Debug function
+local function Debug(message)
+	if (DEBUG == true) then
+		DEFAULT_CHAT_FRAME:AddMessage("|cff0000ff"..message);
+	end
 end
 
-
-local sST,sSCD = 0,0
-local sSTold
-local function GlobalCD_Check()
-	local _,_,offset,numSpells = GetSpellTabInfo(GetNumSpellTabs())
-	local numAllSpell = offset + numSpells;
-	for i=1,numAllSpell do
-		local name = GetSpellName(i,"BOOKTYPE_SPELL");
-		if ( name == "Serpent Sting" ) then
-			sST,sSCD = GetSpellCooldown(i,"BOOKTYPE_SPELL")
+-- Find spell by name.
+local function FindSpellIdByName(name)
+	-- Get the spell tab information.
+	local _, _, offset, numSpells = GetSpellTabInfo(GetNumSpellTabs());
+	-- Calculate the total number of spells.
+	local totalSpells = offset + numSpells;
+	for i = 1, totalSpells do
+		spellName = GetSpellName(i, "BOOKTYPE_SPELL");
+		if (spellName == name) then
+			return i;
 		end
 	end
 end
 
+-- Function to create the autoshot bar.
+local function CreateAutoShotBar()
+	Debug("Creating autoshot bar");
+
+	-- Calculate the table locations depending on the screen size.
+	Table["posX"] = Table["posX"] * GetScreenWidth() / 1000;
+	Table["posY"] = Table["posY"] * GetScreenHeight() / 1000;
+	Table["Width"] = Table["Width"] * GetScreenWidth() / 1000;
+	Table["Height"] = Table["Height"] * GetScreenHeight() / 1000;
+
+	-- Create a timer frame.
+	AutoShotTimerFrame = CreateFrame("Frame", nil, UIParent);
+	AutoShotTimerFrame:SetFrameStrata("HIGH");
+	AutoShotTimerFrame:SetWidth(Table["Width"]);
+	AutoShotTimerFrame:SetHeight(Table["Height"]);
+	AutoShotTimerFrame:SetPoint("CENTER", UIParent, "CENTER", Table["posX"], Table["posY"]);
+	AutoShotTimerFrame:SetAlpha(0);
+
+	-- Create a texture for the timer.
+	AutoShotOverlayTexture = AutoShotTimerFrame:CreateTexture(nil, "OVERLAY");
+	AutoShotOverlayTexture:SetHeight(Table["Height"]);
+	AutoShotOverlayTexture:SetTexture(Textures.Bar);
+	AutoShotOverlayTexture:SetPoint("CENTER", AutoShotTimerFrame, "CENTER");
+
+	-- Create the background texture.
+	local AutoShotArtworkTexture = AutoShotTimerFrame:CreateTexture(nil, "ARTWORK");
+	AutoShotArtworkTexture:SetTexture(15/100, 15/100, 15/100, 1);
+	AutoShotArtworkTexture:SetAllPoints(AutoShotTimerFrame);
+	
+	-- Create the border texture.
+	local AutoShotBorderTexture = AutoShotTimerFrame:CreateTexture(nil, "BORDER");
+	AutoShotBorderTexture:SetPoint("CENTER", AutoShotTimerFrame, "CENTER");
+	AutoShotBorderTexture:SetWidth(Table["Width"] + 3);
+	AutoShotBorderTexture:SetHeight(Table["Height"] + 3);
+	AutoShotBorderTexture:SetTexture(0, 0, 0);
+	
+	-- Create the background border texture.
+	local AutoShotBackgroundTexture = AutoShotTimerFrame:CreateTexture(nil, "BACKGROUND");
+	AutoShotBackgroundTexture:SetPoint("CENTER", AutoShotTimerFrame, "CENTER");
+	AutoShotBackgroundTexture:SetWidth(Table["Width"] + 6);
+	AutoShotBackgroundTexture:SetHeight(Table["Height"] + 6);
+	AutoShotBackgroundTexture:SetTexture(1, 1, 1);
+
+end
+
+-- Function which checks the global CD.
+local function CheckGlobalCD()
+	Debug("CheckGlobalCD");
+	local serpentStingId = FindSpellIdByName("Serpent Sting");
+	G_SpellStartTime, G_SpellCoolDown = GetSpellCooldown(serpentStingId, "BOOKTYPE_SPELL")
+end
+
+-- Function to manage when casting has started.
 local function Cast_Start()
-	_G[AddOn.."_Texture_Timer"]:SetVertexColor(1,0,0);
-	posX, posY = GetPlayerMapPosition("player");
-	castStart = GetTime();
+	Debug("Cast_Start");
+	AutoShotOverlayTexture:SetVertexColor(1, 0, 0);
+	G_PosX, G_PosY = GetPlayerMapPosition("player");
+	G_CastStart = GetTime();
 end
+
+-- Function to manage cast updates.
 local function Cast_Update()
-	_G[AddOn.."_Frame_Timer"]:SetAlpha(1);
-	local relative = GetTime() - castStart
-	if ( relative > castTime ) then
-		castStart = false;
-	elseif ( swingStart == false ) then
-		_G[AddOn.."_Texture_Timer"]:SetWidth(Table["Width"] * relative/castTime);
+	Debug("Cast_Update");
+	AutoShotTimerFrame:SetAlpha(1);
+	local relative = GetTime() - G_CastStart
+	if ( relative > G_CastTime ) then
+		G_CastStart = false;
+	elseif ( G_SwingStart == false ) then
+		AutoShotOverlayTexture:SetWidth(Table["Width"] * relative / G_CastTime);
 	end
 end
+
+-- Function to manage cast interrupts.
 local function Cast_Interrupted()
-	_G[AddOn.."_Frame_Timer"]:SetAlpha(0);
-	swingStart = false;
-	Cast_Start()
-end
-
-local function Shot_Start()
+	Debug("Cast_Interrupted");
+	AutoShotTimerFrame:SetAlpha(0);
+	G_SwingStart = false;
 	Cast_Start();
-	shooting = true;
 end
+
+-- Function to manage auto shot starting.
+local function Shot_Start()
+	Debug("Shot_Start");
+	Cast_Start();
+	G_Shooting = true;
+end
+
+-- Function to manage auto shot ending.
 local function Shot_End()
-	if ( swingStart == false ) then
-		_G[AddOn.."_Frame_Timer"]:SetAlpha(0);
+	Debug("Shot_End");
+	if (G_SwingStart == false) then
+		AutoShotTimerFrame:SetAlpha(0);
 	end
-	castStart = false
-	shooting = false
+	G_CastStart = false;
+	G_Shooting = false;
 end
 
+-- Function to manage swing starting.
 local function Swing_Start()
-	swingTime = UnitRangedDamage("player") - castTime;
-	_G[AddOn.."_Texture_Timer"]:SetVertexColor(1,1,1);
-	castStart = false
-	swingStart = GetTime();
+	Debug("Swing_Start");
+	G_SwingTime = UnitRangedDamage("player") - G_CastTime;
+	AutoShotOverlayTexture:SetVertexColor(1, 1, 1);
+	G_CastStart = false;
+	G_SwingStart = GetTime();
 end
 
-
-
-local AimedTooltip = CreateFrame("GameTooltip","AimedTooltip",UIParent,"GameTooltipTemplate");
-AimedTooltip:SetOwner(UIParent,"ANCHOR_NONE");
-
-local AimedID
-local function AimedID_Get()
-	local _,_,offset,numSpells = GetSpellTabInfo(GetNumSpellTabs())
-	local numAllSpell = offset + numSpells;
-	for spellID=1,numAllSpell do
-		local name = GetSpellName(spellID,"BOOKTYPE_SPELL");
-		if ( name == "Aimed Shot" ) then
-			AimedID = spellID
-		end
-	end
+-- Function to get the Aimed Shot ID.
+local function GetAimedShotId()
+	G_AimedShotId = FindSpellIdByName("Aimed Shot");
 end
 
+-- Function for when aimed shot has started.
 local function Aimed_Start()
-	aimedStart = GetTime()
+	Debug("Aimed_Start");
 
-	if ( swingStart == false ) then
-		_G[AddOn.."_Frame_Timer"]:SetAlpha(0);
+	G_AimedStart = GetTime();
+
+	if (G_SwingStart == false) then
+		AutoShotTimerFrame:SetAlpha(0);
 	end
-	castStart = false
 
-	--[[
-	AimedTooltip:ClearLines();
-	AimedTooltip:SetInventoryItem("player", 18)
-	local speed_base = string.gsub(AimedTooltipTextRight3:GetText(),"Speed ","")
-	local speed_haste = UnitRangedDamage("player");
-	local castTime_Aimed = 3 * speed_haste / speed_base -- rapid 1.4 / quick 1.3 / berserking / spider 1.2
-	]]
+	G_CastStart = false;
 
-	-- azt kéne, hogy alapból megnézi mennyi az auto-shot casttime (speed_haste) belogoláskor pl. (a lényeg, hogy modosító buff ne legyen), majd utána ahhoz viszonítja az épp jelenlévőt. De lehet ez se jó, mert hátha van olyan amit auto-shotét csökkenti, aimedét nem (mint pl. quiver)
-
-	local castTime_Aimed = 3
-	for i=1,32 do
-		if UnitBuff("player",i) == "Interface\\Icons\\Ability_Warrior_InnerRage" then
-			castTime_Aimed = castTime_Aimed/1.3
+	for i = 1, 32 do
+		if UnitBuff("player", i) == "Interface\\Icons\\Ability_Warrior_InnerRage" then
+			G_AimedShotCastTime = G_AimedShotCastTime / 1.3
 		end
-		if UnitBuff("player",i) == "Interface\\Icons\\Ability_Hunter_RunningShot" then
-			castTime_Aimed = castTime_Aimed/1.4
+		if UnitBuff("player", i) == "Interface\\Icons\\Ability_Hunter_RunningShot" then
+			G_AimedShotCastTime = G_AimedShotCastTime / 1.4
 		end
-		if UnitBuff("player",i) == "Interface\\Icons\\Racial_Troll_Berserk" then
-			castTime_Aimed = castTime_Aimed/ (1 + berserkValue)
+		if UnitBuff("player", i) == "Interface\\Icons\\Racial_Troll_Berserk" then
+			G_AimedShotCastTime = G_AimedShotCastTime / (1 + G_BerserkValue)
 		end
-		if UnitBuff("player",i) == "Interface\\Icons\\Inv_Trinket_Naxxramas04" then
-			castTime_Aimed = castTime_Aimed/1.2
+		if UnitBuff("player", i) == "Interface\\Icons\\Inv_Trinket_Naxxramas04" then
+			G_AimedShotCastTime = G_AimedShotCastTime / 1.2
 		end
 	end
-	--[[local _,_,latency = GetNetStats();
-	latency = latency/1000;
-	castTime_Aimed = castTime_Aimed - latency;]]
 	
-	if ( AimedCastBar == true ) then
+	if (G_AimedCastBar == true) then
 		CastingBarFrameStatusBar:SetStatusBarColor(1.0, 0.7, 0.0);
 		CastingBarSpark:Show();
 		CastingBarFrame.startTime = GetTime();
@@ -199,150 +235,176 @@ local function Aimed_Start()
 	end
 end
 
-UseAction_Real = UseAction;
-function UseAction( slot, checkFlags, checkSelf )
-	AimedTooltip:ClearLines();
-	AimedTooltip:SetAction(slot);
-	local spellName = AimedTooltipTextLeft1:GetText();
-	if ( spellName == "Aimed Shot" ) then
-		Aimed_Start()
+-- Function which override the UseAction function.
+-- This intercepts the aimed shot cast.
+function UseAction(slot, checkFlags, checkSelf)
+	Debug("UseAction");
+	AimedTooltipFrame:ClearLines();
+	AimedTooltipFrame:SetAction(slot);
+	local spellName = AimedTooltipFrameTextLeft1:GetText();
+	if (spellName == "Aimed Shot") then
+		Aimed_Start();
 	end
-	UseAction_Real( slot, checkFlags, checkSelf );
+	CoreUseAction(slot, checkFlags, checkSelf);
 end
 
-CastSpell_Real = CastSpell;
+-- Function which override the CastSpell function.
+-- This checks for casted things which are Aimed Shot.
 function CastSpell(spellID, spellTab)
-	AimedID_Get();
-	if ( spellID == AimedID and spellTab == "BOOKTYPE_SPELL" ) then
-		Aimed_Start()
+	Debug("CastSpell");
+	GetAimedShotId();
+	if (spellID == G_AimedShotId and spellTab == "BOOKTYPE_SPELL") then
+		Aimed_Start();
 	end
-	CastSpell_Real(spellID,spellTab);
+	CoreCastSpell(spellID,spellTab);
 end
 
-CastSpellByName_Real = CastSpellByName;
+-- Function which override the CastSpellByName function.
+-- This checks for casted things which are called Aimed Shot.
 function CastSpellByName(spellName)
-	if ( spellName == "Aimed Shot" ) then
-		Aimed_Start()
+	Debug("CastSpellByName");
+	if (spellName == "Aimed Shot") then
+		Aimed_Start();
 	end
-	CastSpellByName_Real(spellName)
+	CoreCastSpellByName(spellName);
 end
 
+-- Function to handle the player login event.
+local function PlayerLogin()
+	Debug("PlayerLogin");
+	CreateAutoShotBar();
+	DEFAULT_CHAT_FRAME:AddMessage("|cff00ccff"..G_AddOn.."|cffffffff Loaded");
+end
 
-local Frame = CreateFrame("Frame");
-Frame:RegisterAllEvents()
-Frame:RegisterEvent("PLAYER_LOGIN")
-Frame:RegisterEvent("SPELLCAST_STOP")
-Frame:RegisterEvent("CURRENT_SPELL_CAST_CHANGED")
-Frame:RegisterEvent("START_AUTOREPEAT_SPELL")
-Frame:RegisterEvent("STOP_AUTOREPEAT_SPELL")
-Frame:RegisterEvent("ITEM_LOCK_CHANGED")
-
-
-Frame:SetScript("OnEvent",function()
-	if ( event == "PLAYER_LOGIN" ) then
-		AutoShotBar_Create();
-		DEFAULT_CHAT_FRAME:AddMessage("|cff00ccff"..AddOn.."|cffffffff Loaded");
+-- Function to handle the spellcast stop event.
+local function SpellcastStop()
+	Debug("SpellcastStop");
+	if (G_AimedStart ~= false) then
+		G_AimedStart = false;
 	end
-	if ( event == "START_AUTOREPEAT_SPELL" ) then
+	CheckGlobalCD();
+	if (G_SpellCoolDown == 1.5) then
+		G_OldSpellStartTime = G_SpellStartTime;
+	end
+end
+
+-- Function to handle the current spell cast changed event.
+local function CurrentSpellCastChanged()
+	Debug("CurrentSpellCastChanged");
+	if (G_SwingStart == false and G_AimedStart == false) then
+		G_InterruptTime = GetTime();
+		Cast_Interrupted();
+	end
+end
+
+-- Function to handle the item lock changed event.
+local function ItemLockChanged()
+	Debug("ItemLockChanged");
+	if (G_Shooting == true) then 
+		CheckGlobalCD();
+
+		if (G_AimedStart ~= false) then
+			AutoShotTimerFrame:SetAlpha(1);
+			Cast_Start();
+		elseif (G_SpellCoolDown ~= 1.5) then
+			Swing_Start();
+		elseif (G_OldSpellStartTime == G_SpellStartTime) then
+			Swing_Start();
+		else
+			G_OldSpellStartTime = G_SpellStartTime;
+		end
+	end
+end
+
+-- Function called from the event.
+local function UnitAura()
+	Debug("UnitAura");
+	for i = 1, 16 do
+		if ( UnitBuff("player",i) == "Interface\\Icons\\Racial_Troll_Berserk" ) then
+			if ( G_BerserkValue == false ) then
+				if((UnitHealth("player")/UnitHealthMax("player")) >= 0.40) then
+					G_BerserkValue = (1.30 - (UnitHealth("player")/UnitHealthMax("player")))/3;
+				else
+					G_BerserkValue = 0.30;
+				end
+			end
+		else
+			G_BerserkValue = false;
+		end
+	end
+end
+
+-- Handle the OnEvent callbacks.
+local function AutoShotOnEvent()
+	-- Capture the player login event.
+	if (event == "PLAYER_LOGIN") then
+		PlayerLogin();
+
+	-- Capture the auto shot starting.
+	elseif (event == "START_AUTOREPEAT_SPELL") then
 		Shot_Start();
-	end
-	if ( event == "STOP_AUTOREPEAT_SPELL" ) then
+
+	-- Capture the auto shot ending.
+	elseif (event == "STOP_AUTOREPEAT_SPELL") then
 		Shot_End();
+
+	-- Capture the spellcast stop event.
+	elseif (event == "SPELLCAST_STOP") then
+		SpellcastStop();
+
+	-- Capture the current spell changed event.
+	elseif (event == "CURRENT_SPELL_CAST_CHANGED") then
+		CurrentSpellCastChanged();
+
+	-- Capture the item lock changed event.
+	elseif (event == "ITEM_LOCK_CHANGED") then
+		ItemLockChanged();
+
+	-- Capture the unit aura event.
+	elseif (event == "UNIT_AURA") then
+		UnitAura();
+
 	end
+end
 
-	if ( event == "SPELLCAST_STOP" ) then
-		if ( aimedStart ~= false ) then
-			aimedStart = false
-		end
-		GlobalCD_Check();
-		if ( sSCD == 1.5 ) then
-			sSTold = sST
-		end
-	end
-	if ( event == "CURRENT_SPELL_CAST_CHANGED" ) then
-		if ( swingStart == false and aimedStart == false ) then
-			interruptTime = GetTime()
-			Cast_Interrupted();
-		end
-	end
-	if ( event == "ITEM_LOCK_CHANGED" ) then
-		if ( shooting == true ) then 
-			GlobalCD_Check();
+-- Handle the OnEvent callbacks.
+local function AutoShotOnUpdate()
 
-			--[[local _,_,offset,numSpells = GetSpellTabInfo(GetNumSpellTabs())
-			local numAllSpell = offset + numSpells;
-			for i=1,numAllSpell do
-				local name = GetSpellName(i,"BOOKTYPE_SPELL");
-				if ( name == "Aimed Shot" ) then
-					aST,aSCD = GetSpellCooldown(i,"BOOKTYPE_SPELL")
-				end
-			end]]
-			
-
-			if ( aimedStart ~= false ) then
-				_G[AddOn.."_Frame_Timer"]:SetAlpha(1);
-				Cast_Start();
-			elseif ( sSCD ~= 1.5 ) then
-				Swing_Start();
-			elseif ( sSTold == sST ) then
-				Swing_Start();
-			else
-				sSTold = sST;
-			end
-
---			if ( GetTime()-interruptTime > 0.3 ) then -- ha Concussive Shot castolás megy Auto-Shot castolás közben, ne induljon el a swingtimer
---			end
-		end
-	end
-	--[[if ( UnitName("target") ) then
-		if ( event ~= "CHAT_MSG_CHANNEL" and event ~= "TABARD_CANSAVE_CHANGED" and event ~= "SPELL_UPDATE_COOLDOWN" and event ~= "CHAT_MSG_SPELL_FAILED_LOCALPLAYER"  and event ~= "CURSOR_UPDATE" and event ~= "CHAT_MSG_COMBAT_SELF_HITS" and event ~= "SPELL_UPDATE_USABLE" and event ~= "UPDATE_MOUSEOVER_UNIT" and event ~= "UNIT_HAPPINESS" and event ~= "PLAYER_TARGET_CHANGED" and event ~= "UNIT_MANA" and event ~= "UNIT_HEALTH" ) then
-			if ( event ~= "ACTIONBAR_UPDATE_STATE" and event ~= "CURRENT_SPELL_CAST_CHANGED" ) then
-				if ( event ~= "UNIT_COMBAT" and event ~= "UI_ERROR_MESSAGE"and event ~= "SPELLCAST_INTERRUPTED" ) then
-					DEFAULT_CHAT_FRAME:AddMessage(event);
-				end
-			end
-		end
-	end]]
-	if ( event == "UNIT_AURA" ) then
-		for i=1,16 do
-			if ( UnitBuff("player",i) == "Interface\\Icons\\Racial_Troll_Berserk" ) then
-				if ( berserkValue == false ) then
-					if((UnitHealth("player")/UnitHealthMax("player")) >= 0.40) then
-						berserkValue = (1.30 - (UnitHealth("player")/UnitHealthMax("player")))/3
-					else
-						berserkValue = 0.30
-					end
-				end
-			else
-				berserkValue = false
-			end
-		end
-	end
-end)
-
-
-Frame:SetScript("OnUpdate",function()
-	if ( shooting == true ) then
-		if ( castStart ~= false ) then
-			local cposX, cposY = GetPlayerMapPosition("player") -- player position atm
-			if ( posX == cposX and posY == cposY ) then
+	-- Currently auto-shotting.
+	if (G_Shooting == true) then
+		if (G_CastStart ~= false) then
+			-- Get the players position.
+			local currentPlayerPosX, currentPlayerPosY = GetPlayerMapPosition("player");
+			-- If the player hasn't moved, updated. Otherwise interrupted.
+			if (G_PosX == currentPlayerPosX and G_PosY == currentPlayerPosY) then
 				Cast_Update();
 			else
 				Cast_Interrupted();
 			end
 		end
 	end
-	if ( swingStart ~= false ) then
-		local relative = GetTime() - swingStart
-		_G[AddOn.."_Texture_Timer"]:SetWidth(Table["Width"] - (Table["Width"]*relative/swingTime));
-		if ( relative > swingTime ) then
-			if ( shooting == true and aimedStart == false ) then
-				Cast_Start()
+
+	-- Currently swinging
+	if (G_SwingStart ~= false) then
+		-- Get the time since the swing started.
+		local relative = GetTime() - G_SwingStart;
+		-- Set the texture to be a percent of the swing.
+		AutoShotOverlayTexture:SetWidth(Table["Width"] - (Table["Width"] * relative / G_SwingTime));
+		-- If the time since the swing started is now longer than the swing start time.
+		if (relative > G_SwingTime) then
+			-- If im shooting, but its not aimed shot then cast start.
+			if (G_Shooting == true and G_AimedStart == false) then
+				Cast_Start();
 			else
-				_G[AddOn.."_Texture_Timer"]:SetWidth(0);
-				_G[AddOn.."_Frame_Timer"]:SetAlpha(0);
+				AutoShotOverlayTexture:SetWidth(0);
+				AutoShotTimerFrame:SetAlpha(0);
 			end
-			swingStart = false;
+			G_SwingStart = false;
 		end
 	end
-end)
+
+end
+
+-- Register the frame to handle the event and update events.
+Frame:SetScript("OnEvent", AutoShotOnEvent())
+Frame:SetScript("OnUpdate", AutoShotOnUpdate())
