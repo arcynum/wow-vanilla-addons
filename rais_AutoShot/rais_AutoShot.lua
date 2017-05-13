@@ -15,7 +15,6 @@ local Table = {
 
 -- General global variables.
 local DEBUG = true;
-local G_AimedCastBar = true;
 local G_CastStart = false;
 local G_SwingStart = false;
 local G_AimedStart = false;
@@ -55,6 +54,9 @@ AimedTooltipFrame:SetOwner(UIParent, "ANCHOR_NONE");
 -- Extra frames.
 local AutoShotTimerFrame;
 
+-- Font String.
+local AutoShotFontString;
+
 -- Textures
 local AutoShotOverlayTexture;
 
@@ -90,7 +92,7 @@ local function CreateAutoShotBar()
 	Table["Height"] = Table["Height"] * GetScreenHeight() / 1000;
 
 	-- Create a timer frame.
-	AutoShotTimerFrame = CreateFrame("Frame", nil, UIParent);
+	AutoShotTimerFrame = CreateFrame("Frame", "AutoShotTimerFrame", UIParent);
 	AutoShotTimerFrame:SetFrameStrata("HIGH");
 	AutoShotTimerFrame:SetWidth(Table["Width"]);
 	AutoShotTimerFrame:SetHeight(Table["Height"]);
@@ -101,7 +103,14 @@ local function CreateAutoShotBar()
 	AutoShotOverlayTexture = AutoShotTimerFrame:CreateTexture(nil, "OVERLAY");
 	AutoShotOverlayTexture:SetHeight(Table["Height"]);
 	AutoShotOverlayTexture:SetTexture(Textures.Bar);
-	AutoShotOverlayTexture:SetPoint("CENTER", AutoShotTimerFrame, "CENTER");
+	AutoShotOverlayTexture:SetPoint("LEFT", AutoShotTimerFrame, "LEFT");
+
+	-- Create a text frame.
+	AutoShotFontString = AutoShotTimerFrame:CreateFontString("AutoShotFontString", "OVERLAY");
+	AutoShotFontString:SetPoint("CENTER", AutoShotTimerFrame, "CENTER");
+	AutoShotFontString:SetWidth(Table["Width"]);
+	AutoShotFontString:SetHeight(Table["Height"]);
+	AutoShotFontString:SetFont(STANDARD_TEXT_FONT, 10, "OUTLINE");
 
 	-- Create the background texture.
 	local AutoShotArtworkTexture = AutoShotTimerFrame:CreateTexture(nil, "ARTWORK");
@@ -132,21 +141,23 @@ local function CheckGlobalCD()
 end
 
 -- Function to manage when casting has started.
+-- This makes the bar red. Meaning that the cast of the shot has started.
 local function Cast_Start()
 	Debug("Cast_Start");
 	AutoShotOverlayTexture:SetVertexColor(1, 0, 0);
+	AutoShotFontString:SetText("Casting");
 	G_PosX, G_PosY = GetPlayerMapPosition("player");
 	G_CastStart = GetTime();
 end
 
 -- Function to manage cast updates.
 local function Cast_Update()
-	Debug("Cast_Update");
 	AutoShotTimerFrame:SetAlpha(1);
 	local relative = GetTime() - G_CastStart
-	if ( relative > G_CastTime ) then
+	if (relative > G_CastTime) then
 		G_CastStart = false;
-	elseif ( G_SwingStart == false ) then
+	elseif (G_SwingStart == false) then
+		-- AutoShotOverlayTexture:SetWidth(Table["Width"] * relative / G_CastTime);
 		AutoShotOverlayTexture:SetWidth(Table["Width"] * relative / G_CastTime);
 	end
 end
@@ -177,9 +188,11 @@ local function Shot_End()
 end
 
 -- Function to manage swing starting.
+-- This makes the bar red. Meaning that the swing has started.
 local function Swing_Start()
 	Debug("Swing_Start");
 	G_SwingTime = UnitRangedDamage("player") - G_CastTime;
+	AutoShotFontString:SetText("Swinging");
 	AutoShotOverlayTexture:SetVertexColor(1, 1, 1);
 	G_CastStart = false;
 	G_SwingStart = GetTime();
@@ -215,23 +228,6 @@ local function Aimed_Start()
 		if UnitBuff("player", i) == "Interface\\Icons\\Inv_Trinket_Naxxramas04" then
 			G_AimedShotCastTime = G_AimedShotCastTime / 1.2
 		end
-	end
-	
-	if (G_AimedCastBar == true) then
-		CastingBarFrameStatusBar:SetStatusBarColor(1.0, 0.7, 0.0);
-		CastingBarSpark:Show();
-		CastingBarFrame.startTime = GetTime();
-		CastingBarFrame.maxValue = CastingBarFrame.startTime + castTime_Aimed;
-		CastingBarFrameStatusBar:SetMinMaxValues(CastingBarFrame.startTime, CastingBarFrame.maxValue);
-		CastingBarFrameStatusBar:SetValue(CastingBarFrame.startTime);
-		CastingBarText:SetText("Aimed Shot   "..string.format("%.2f",castTime_Aimed));
-		-- CastingBarText:SetText(castTime_Aimed);
-		CastingBarFrame:SetAlpha(1.0);
-		CastingBarFrame.holdTime = 0;
-		CastingBarFrame.casting = 1;
-		CastingBarFrame.fadeOut = nil;
-		CastingBarFrame:Show();
-		CastingBarFrame.mode = "casting";
 	end
 end
 
@@ -271,7 +267,6 @@ end
 
 -- Function to handle the player login event.
 local function PlayerLogin()
-	Debug("PlayerLogin");
 	CreateAutoShotBar();
 	DEFAULT_CHAT_FRAME:AddMessage("|cff00ccff"..G_AddOn.."|cffffffff Loaded");
 end
@@ -290,7 +285,6 @@ end
 
 -- Function to handle the current spell cast changed event.
 local function CurrentSpellCastChanged()
-	Debug("CurrentSpellCastChanged");
 	if (G_SwingStart == false and G_AimedStart == false) then
 		G_InterruptTime = GetTime();
 		Cast_Interrupted();
@@ -299,10 +293,8 @@ end
 
 -- Function to handle the item lock changed event.
 local function ItemLockChanged()
-	Debug("ItemLockChanged");
 	if (G_Shooting == true) then 
 		CheckGlobalCD();
-
 		if (G_AimedStart ~= false) then
 			AutoShotTimerFrame:SetAlpha(1);
 			Cast_Start();
@@ -318,12 +310,11 @@ end
 
 -- Function called from the event.
 local function UnitAura()
-	Debug("UnitAura");
 	for i = 1, 16 do
-		if ( UnitBuff("player",i) == "Interface\\Icons\\Racial_Troll_Berserk" ) then
-			if ( G_BerserkValue == false ) then
-				if((UnitHealth("player")/UnitHealthMax("player")) >= 0.40) then
-					G_BerserkValue = (1.30 - (UnitHealth("player")/UnitHealthMax("player")))/3;
+		if (UnitBuff("player", i) == "Interface\\Icons\\Racial_Troll_Berserk") then
+			if (G_BerserkValue == false) then
+				if ((UnitHealth("player") / UnitHealthMax("player")) >= 0.40) then
+					G_BerserkValue = (1.30 - (UnitHealth("player")/UnitHealthMax("player"))) / 3;
 				else
 					G_BerserkValue = 0.30;
 				end
@@ -389,7 +380,8 @@ local function AutoShotOnUpdate()
 		-- Get the time since the swing started.
 		local relative = GetTime() - G_SwingStart;
 		-- Set the texture to be a percent of the swing.
-		AutoShotOverlayTexture:SetWidth(Table["Width"] - (Table["Width"] * relative / G_SwingTime));
+		-- AutoShotOverlayTexture:SetWidth(Table["Width"] - (Table["Width"] * relative / G_SwingTime));
+		AutoShotOverlayTexture:SetWidth(Table["Width"] * relative / G_SwingTime);
 		-- If the time since the swing started is now longer than the swing start time.
 		if (relative > G_SwingTime) then
 			-- If im shooting, but its not aimed shot then cast start.
