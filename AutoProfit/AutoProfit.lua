@@ -5,38 +5,57 @@
 --	Written by Jason Allen.
 ----------------------------------------------------------------
 
+-- Global variables
+local G_Time = GetTime();
+local G_WaitFrame = nil;
+local AUTOPROFIT_DELAY = 0.08;
+
 autoProfitExceptions = { };
 totalProfit = 0;
 rotation = 0;
 rotrate = 0;
 AUTOPROFIT_VERSION = "v2.55 January 6th, 2006";
 
-function SellJunk()
-	local numOfSales = 0;
-	
-	for bag = 0, 4 do
+-- Searches through bags to find junk items
+-- args[1], Current bag (zero-index)
+-- args[2], Current bag slot (one-index)
+function SellJunk(args)
+	for bag = args[1], 4 do
 		if GetContainerNumSlots(bag) > 0 then
-			for slot = 0, GetContainerNumSlots(bag) do
+			for slot = args[2], GetContainerNumSlots(bag) do
 				local texture, itemCount, locked, quality = GetContainerItemInfo(bag, slot);
 				
 				if (quality == 0) then
 					local result = AutoSeller_ProcessLink(GetContainerItemLink(bag, slot));
 					if (result > 0) then
-					DEFAULT_CHAT_FRAME:AddMessage("|c00bfffffAutoProfit|r: Sold " .. GetContainerItemLink(bag, slot), 0.0, .8, 1);
-					PickupContainerItem(bag, slot);
-					MerchantItemButton_OnClick("LeftButton");
+						DEFAULT_CHAT_FRAME:AddMessage("|c00bfffffAutoProfit|r: Sold "..GetContainerItemLink(bag, slot), 0, 0.8, 1);
+						PickupContainerItem(bag, slot);
+						MerchantItemButton_OnClick("LeftButton");
+
+						-- Don't continue after last slot in final bag
+						if(bag == 4 and slot == GetContainerNumSlots(bag)) then return;	end
+						-- Delay searching for next grey to avoid rate limits
+						AutoProfit_Wait(AUTOPROFIT_DELAY, SellJunk, bag, slot + 1);
+						return;
 					end
 				end
 				
 				if (quality == -1) then
 					local linkcolor = AutoSeller_ProcessLink(GetContainerItemLink(bag, slot));
 					if (linkcolor == 1) then
-						DEFAULT_CHAT_FRAME:AddMessage("|c00bfffffAutoProfit|r: Sold " .. GetContainerItemLink(bag, slot), 0.0, .8, 1);
+						DEFAULT_CHAT_FRAME:AddMessage("|c00bfffffAutoProfit|r: Sold "..GetContainerItemLink(bag, slot), 0, 0.8, 1);
 						PickupContainerItem(bag, slot);
 						MerchantItemButton_OnClick("LeftButton");
+
+						-- Don't continue after last slot in final bag
+						if(bag == 4 and slot == GetContainerNumSlots(bag)) then return;	end
+						-- Delay searching for next grey to avoid rate limits
+						AutoProfit_Wait(AUTOPROFIT_DELAY, SellJunk, bag, slot + 1);
+						return;
 					end
 				end
 			end
+			args[2] = 0; -- Reset current bag slot
 		end
 	end
 end
@@ -175,4 +194,23 @@ function AutoSeller_ProcessLink(link)
 		
 		return 0;
 	end
+end
+
+-- Waits for `delay` to execute `func` with optional parameters
+function AutoProfit_Wait(delay, func, ...)
+	if(type(delay) ~= "number" or type(func) ~= "function") then return; end
+	if(waitFrame == nil) then
+		waitFrame = CreateFrame("Frame", "AutoProfitWaitFrame", UIParent);
+	else
+		waitFrame:Show();
+	end
+	waitFrame:SetScript("onUpdate",function (self, elapse)
+		if(GetTime() - G_Time >= delay) then
+			waitFrame:Hide();
+			func(arg);
+			return;
+		end
+	end);
+	G_Time = GetTime();
+	return;
 end

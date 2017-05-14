@@ -15,25 +15,25 @@ C:\Projects\WoW\Bin\Interface\FrameXML\UI.xsd">
 			<!-- <Button name="AutosellButton" parent="MerchantBuyBackItem" inherits="UIPanelButtonTemplate" text="Sell Junk"> -->
 			
 			<PlayerModel name="TreasureModel" parent="MerchantBuyBackItem">
-                <Size>
-                    <AbsDimension x="32" y="32"/>
-                </Size>
-                <Anchors>
+				<Size>
+					<AbsDimension x="32" y="32"/>
+				</Size>
+				<Anchors>
 					<Anchor point="TOPRIGHT" relativeTo="MerchantFrame">
-                            <Offset>
-                                <AbsDimension x="-40" y="-38"/>
-                            </Offset>
-                        </Anchor>
-                </Anchors>
-                <Scripts>
-                    <OnLoad>
+						<Offset>
+							<AbsDimension x="-40" y="-38"/>
+						</Offset>
+					</Anchor>
+				</Anchors>
+				<Scripts>
+					<OnLoad>
 						TreasureModel:SetModel("World/Generic/PassiveDoodads/TreasurePiles/GoldPileLarge01.m2");
 						TreasureModel:SetScale(1);
 						TreasureModel:SetPosition(-1, -.5, 0);						
-                    </OnLoad>
-                    <OnUpdate>
+					</OnLoad>
+					<OnUpdate>
 						AutoProfit_RotateModel(arg1);
-                    </OnUpdate>
+					</OnUpdate>
 					<OnShow>
 						TreasureModel:SetModel("World/Generic/PassiveDoodads/TreasurePiles/GoldPileLarge01.m2");
 						TreasureModel:SetScale(1);
@@ -41,10 +41,8 @@ C:\Projects\WoW\Bin\Interface\FrameXML\UI.xsd">
 						rotation = 0;
 					</OnShow>
 					
-                </Scripts>
-
-            </PlayerModel>
-			
+				</Scripts>
+			</PlayerModel>
 			
 			<Button name="AutosellButton" parent="MerchantBuyBackItem">
 				<Size>
@@ -80,7 +78,7 @@ C:\Projects\WoW\Bin\Interface\FrameXML\UI.xsd">
 					<OnClick>
 						if (totalProfit > 0) then GameTooltip:Hide(); end
 						rotrate = 0;
-						SellJunk();
+						SellJunk({0, 1});
 					</OnClick>
 					<OnLoad>
 						AutoProfit_OnLoad();
@@ -92,38 +90,37 @@ C:\Projects\WoW\Bin\Interface\FrameXML\UI.xsd">
 					</Size>
 					<Anchors>
 						<Anchor point="CENTER">
-						<Offset>
-							<AbsDimension x="0" y="0"/>
-						</Offset>
+							<Offset>
+								<AbsDimension x="0" y="0"/>
+							</Offset>
 						</Anchor>
 					</Anchors>
 				</NormalTexture>
 				<PushedTexture file="Interface\Buttons\UI-Quickslot-Depress">
-								<Size>
+					<Size>
 						<AbsDimension x="40" y="40"/>
 					</Size>
 					<Anchors>
 						<Anchor point="CENTER">
-						<Offset>
-							<AbsDimension x="0" y="0"/>
-						</Offset>
+							<Offset>
+								<AbsDimension x="0" y="0"/>
+							</Offset>
 						</Anchor>
 					</Anchors>
 				</PushedTexture>
 				<HighlightTexture file="Interface\Buttons\ButtonHilight-Square" alphaMode="ADD">
-												<Size>
+					<Size>
 						<AbsDimension x="34" y="34"/>
 					</Size>
 					<Anchors>
 						<Anchor point="CENTER">
-						<Offset>
-							<AbsDimension x="0" y="0"/>
-						</Offset>
+							<Offset>
+								<AbsDimension x="0" y="0"/>
+							</Offset>
 						</Anchor>
 					</Anchors>
 				</HighlightTexture>
 			</Button>
-			
 			
 		</Frames>
 	</Frame>
