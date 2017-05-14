@@ -177,9 +177,11 @@ local function AutoShotOnEvent()
 	if (event == "PLAYER_LOGIN") then
 		PlayerLogin();
 
+	-- Player has entered combat.
 	elseif (event == "PLAYER_REGEN_DISABLED") then
 		CombatStarted();
 
+	-- Player has left combat.
 	elseif (event == "PLAYER_REGEN_ENABLED") then
 		CombatEnded();
 
