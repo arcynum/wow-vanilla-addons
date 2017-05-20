@@ -1,0 +1,5 @@
+## Interface: 11200
+## Title: RibsEnhancedCharacterInfo
+## Author: arcynum
+## Comments: Enhance the character sheet with specific additional information.
+RibsEnhancedCharacterInfo.lua
