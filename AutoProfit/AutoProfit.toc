@@ -1,6 +1,8 @@
-## Title: AutoProfit v2.55
+## Title: AutoProfit 3
 ## Interface: 11000
-## Version: 2.55
-## SavedVariables: autoProfitExceptions
-## Notes: Automatically sells low quality gray items to the vendor. For the latest version check out: www.gameguidesonline.com. (Under the World of Warcraft menu.)
+## Version: 3.1
+## Author: Beegee
+## Dependencies:
+## SavedVariables: AutoProfit
+## Notes: Automatically sells low quality gray items to the vendor
 AutoProfit.xml

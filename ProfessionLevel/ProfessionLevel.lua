@@ -5,7 +5,7 @@ Updated and improved for WoW 1.12 by Beegee
 Version 1.2
 	Added limited support for lockpicking
 	Fixed level ?? Bosses incorrectly showing a skinning level of 1
-	Fixed skinning levels 11-20 showing a skinning level of 1
+	Fixed skinning levels 11-20 incorrectly showing a skinning level of 1
 Version 1.1
 	Fixed mining node names and levels
 	Fixed herbalism node names and levels
@@ -115,8 +115,11 @@ LOCKPICKING_OBJECT_LEVEL = {
 	["The Shadowforge Lock"] = 250,
 	["East Garrison Door"] = 250,
 	["Scholomance Door"] = 280,
-	["Service Entrance Gate"] = 300
+	["Elders' Square Service Entrance"] = 300,
+	["Service Entrance Gate"] = 300,
+	["Gauntlet Gate"] = 300
 }
+
 
 function ProfessionLevel_OnShow()
 	local parentFrame = this:GetParent();

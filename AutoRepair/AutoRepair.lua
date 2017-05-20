@@ -2,16 +2,16 @@
 -- Chat Colors
 --
 
-local STATUS_COLOR                  = "|c000066FF";
-local CONNECTION_COLOR              = "|c0033FF66";
-local MONEY_COLOR                   = "|c00FFCC33";
-local DEBUG_COLOR                   = "|c0000FF00";
-local GREY                          = "|c00909090";
-local BRIGHTGREY                    = "|c00D0D0D0";
-local WHITE                         = "|c00FFFFFF";
-local SILVER			= "|c00C0C0C0";
+local STATUS_COLOR		= "|c000066FF";
+local CONNECTION_COLOR	= "|c0033FF66";
+local MONEY_COLOR		= "|c00FFCC33";
+local DEBUG_COLOR		= "|c0000FF00";
+local GREY				= "|c00909090";
+local BRIGHTGREY		= "|c00D0D0D0";
+local WHITE				= "|c00FFFFFF";
 local COPPER			= "|c00CC9900";
-local GOLD			= "|c00FFFF66";
+local SILVER			= "|c00C0C0C0";
+local GOLD				= "|c00FFFF66";
 
 local AR_CurrentVersion = "0.6";
 local AR_DiagOpen = false;
@@ -37,7 +37,6 @@ function AutoRepair_OnEvent(event)
 			AR_RepairHandler(false);
 		end
 	end
-
 end
 
 function AutoRepair_OnUpdate(dt)
@@ -59,7 +58,6 @@ end
 --
 
 function AR_Load()
-
 	AR_Chat("AutoRepair v"..AR_CurrentVersion.." loaded.");
 
 	if (AR_Save == nil) then
@@ -73,17 +71,14 @@ function AR_Load()
 	SlashCmdList["AUTOREPAIR"] = AR_SlashHandler;
 	SLASH_AUTOREPAIR1 = "/autorepair";
 	SLASH_AUTOREPAIR2 = "/ar";
-
 end
 
 function AR_UpgradeFrom(oldVersion)
-
 	if (oldVersion == "0.5") then
 		AR_Save.version = AR_CurrentVersion;
 		AR_Save.verbose = true;
 		AR_Save.skipInv = false;
 	end
-	
 end
 
 
@@ -111,32 +106,28 @@ end
 -- function  By Turan (turan@gryffon.com) - AuctionIt!
 -- http://turan.gryffon.com/wow.html -- gryphon globals.lua 
 -- moved this function here since he updates his library's often
-function setAmountString(amt, sep)
-    local str = "";
-    local gold, silver, copper;
+function setAmountString(amt)
+	if (amt == 0) then return COPPER.."0c"; end
+	local str = "";
+	local gold, silver, copper;
 
-    if (amt == 0) then
-	str = COPPER .. "0 Copper" .. STATUS_COLOR;	
+	copper = mod(floor(amt + .5), 100);
+	silver = mod(floor(amt / 100), 100);
+	gold = mod(floor(amt / (100 * 100)), 100);
+	 
+	if (gold > 0) then str = GOLD..gold.."g" end;
+
+	if (silver > 0) then
+		if (str ~= "") then str = str.." " end;
+		str = str..SILVER..silver.."s";
+	end;
+
+	if (copper > 0) then
+		if (str ~= "") then str = str.." " end;
+		str = str..COPPER..copper.."c";
+	end;
+
 	return str;
-    end
-    if ( not sep ) then sep = " " end;
-    
-    copper = mod(floor(amt + .5),      100);
-    silver = mod(floor(amt/100),       100);
-    gold   = mod(floor(amt/(100*100)), 100);
-    
-    if ( gold   > 0 ) then str = GOLD .. gold .. " Gold" end;
-    if ( silver > 0 ) then
-        if ( str ~= "" ) then str = str .. sep end;
-        str = str .. SILVER .. silver .. " Silver";
-    end;
-    if ( copper > 0 ) then
-        if ( str ~= "" ) then str = str .. sep end;
-        str = str .. COPPER .. copper .. " Copper";
-    end;
-
-    str = str .. STATUS_COLOR;
-    return str;
 end
 
 function setEnabledString(enabled)
@@ -146,18 +137,16 @@ function setEnabledString(enabled)
 		return "Disabled.";
 	end
 end
+
 --
 --	Slash Command Handlers
 --
 
 function AR_SlashHandler(msg)
-
-   local _,_,command,options = string.find(msg,"([%w%p]+)%s*(.*)$");
+	local _,_,command,options = string.find(msg,"([%w%p]+)%s*(.*)$");
 	
-   if (command) then
-   	command = string.lower(command);
-   end
-   if (command == nil or command == "") then
+	if (command) then command = string.lower(command); end
+	if (command == nil or command == "") then
 	AR_Chat("Current Settings:");
 	AR_Chat("MinCost: ".. WHITE .. setAmountString(AR_Save.minCost));
 	AR_Chat("Threshold: " .. WHITE .. setAmountString(AR_Save.costThreshold));
@@ -172,14 +161,13 @@ function AR_SlashHandler(msg)
 	AR_Chat("/ar Verbose -- " .. WHITE .. "This toggles showing repair ammounts in the chat area after repair has been done.");
 	AR_Chat("/ar SkipInv -- " .. WHITE .. "This toggles skipping inventory check/repair.  If enabled, AR will NOT check your inventory.");
 
-   elseif (command == 'enable')		then AR_EnableHandler();
-   elseif (command == 'mincost')	then AR_MinCostHandler(options);
-   elseif (command == 'threshold')	then AR_ThresholdHandler(options);
-   elseif (command == 'prompt')		then AR_PromptHandler();
-   elseif (command == 'verbose')	then AR_VerboseHandler();
-   elseif (command == 'skipinv')	then AR_SkipInvHandler();
-   end
-
+	elseif (command == 'enable')		then AR_EnableHandler();
+	elseif (command == 'mincost')	then AR_MinCostHandler(options);
+	elseif (command == 'threshold')	then AR_ThresholdHandler(options);
+	elseif (command == 'prompt')		then AR_PromptHandler();
+	elseif (command == 'verbose')	then AR_VerboseHandler();
+	elseif (command == 'skipinv')	then AR_SkipInvHandler();
+	end
 end
 
 function AR_SkipInvHandler()
@@ -225,54 +213,47 @@ end
 
 
 function AR_MinCostHandler(option)
-
-   if(option == nil or option == "") then
+	if(option == nil or option == "") then
 		AR_Chat("AutoRepair: Min. Repair Cost: "..setAmountString(AR_Save.minCost)..".");
 		AR_Chat("To Change MinCost Use:");		
 		AR_Chat("/ar mincost <number>");		
 		AR_Chat("<number> must be greater than Zero.");		
-		AR_Chat("<number> is entered in copper.");	   
-   else
-	num = tonumber(option);
-	if (num < 0) then
-		AR_Chat("AutoRepair: Min. Repair Cost Set Error.");		
-		AR_Chat("Correct Usage:");		
-		AR_Chat("/ar mincost <number>");		
-		AR_Chat("<number> must be greater than Zero.");		
 		AR_Chat("<number> is entered in copper.");		
 	else
-		AR_Save.minCost = num;
-		AR_Chat("AutoRepair: Min. Repair Cost Set To: "..setAmountString(AR_Save.minCost)..".");		
+		num = tonumber(option);
+		if (num < 0) then
+			AR_Chat("AutoRepair: Min. Repair Cost Set Error.");		
+			AR_Chat("Correct Usage:");		
+			AR_Chat("/ar mincost <number>");		
+			AR_Chat("<number> must be greater than Zero.");		
+			AR_Chat("<number> is entered in copper.");		
+		else
+			AR_Save.minCost = num;
+			AR_Chat("AutoRepair: Min. Repair Cost Set To: "..setAmountString(AR_Save.minCost)..".");		
+		end
 	end
-
-   end
-
 end
 
 function AR_ThresholdHandler(option)
-
-   if(option == nil or option == "") then
+	if(option == nil or option == "") then
 		AR_Chat("AutoRepair: Threshold Amount: "..setAmountString(AR_Save.costThreshold)..".");
 		AR_Chat("To Change Threshold Use:");		
 		AR_Chat("/ar threshold <number>");		
 		AR_Chat("<number> must be greater than Zero.");		
-		AR_Chat("<number> is entered in copper.");	   
-   else
-	num = tonumber(option);
-	if (num < 0) then
-		AR_Chat("AutoRepair: Threshold Set Error.");		
-		AR_Chat("Correct Usage:");		
-		AR_Chat("/ar threshold <number>");		
-		AR_Chat("<number> must be greater than Zero.");		
 		AR_Chat("<number> is entered in copper.");		
 	else
-		AR_Save.costThreshold = num;
-		AR_Chat("AutoRepair: Threshold Amount Set To: "..setAmountString(AR_Save.costThreshold)..".");		
-
+		num = tonumber(option);
+		if (num < 0) then
+			AR_Chat("AutoRepair: Threshold Set Error.");		
+			AR_Chat("Correct Usage:");		
+			AR_Chat("/ar threshold <number>");		
+			AR_Chat("<number> must be greater than Zero.");		
+			AR_Chat("<number> is entered in copper.");		
+		else
+			AR_Save.costThreshold = num;
+			AR_Chat("AutoRepair: Threshold Amount Set To: "..setAmountString(AR_Save.costThreshold)..".");		
+		end
 	end
-
-   end
-
 end
 
 -- 
@@ -301,6 +282,7 @@ function AR_RepairHandler(skip_equip)
 			end
 			return;
 		end
+
 		if (not skip_equip) then
 			AR_Afford = AR_EquipCost < AR_Funds;
 			AR_OverMin = AR_EquipCost > AR_Save.minCost;
@@ -414,18 +396,17 @@ function AR_ShowInvPrompt(cost)
 end
 
 function AR_GetInventoryCost()
-	
 	local AR_InventoryCost = 0;
-
-	for bag = 0,4,1 do	
-		for slot = 1, GetContainerNumSlots(bag) , 1 do
-			local hasCooldown, repairCost = GameTooltip:SetBagItem(bag,slot);
+	CreateFrame("GameTooltip", "ARTooltip");
+	for bag = 0, 4 do	
+		for slot = 1, GetContainerNumSlots(bag) do
+			local hasCooldown, repairCost = ARTooltip:SetBagItem(bag, slot);
 			if (repairCost) then
 				AR_InventoryCost = AR_InventoryCost + repairCost;
 			end
 		end
 	end
-
+	ARTooltip:Hide();
 	return AR_InventoryCost;
 end
 
@@ -440,16 +421,18 @@ function AR_RepairEquipment()
 end
 
 function AR_RepairInventory()
+	CreateFrame("GameTooltip", "ARTooltip");
 	ShowRepairCursor();
-	for bag = 0,4,1 do	
+	for bag = 0,4,1 do
 		for slot = 1, GetContainerNumSlots(bag) , 1 do
-			local hasCooldown, repairCost = GameTooltip:SetBagItem(bag,slot);
+			local hasCooldown, repairCost = ARTooltip:SetBagItem(bag,slot);
 			if (repairCost and repairCost > 0) then
 				UseContainerItem(bag,slot);
 			end
 		end
 	end
 	HideRepairCursor();
+	ARTooltip:Hide();
 	if (AR_Save.verbose) then
 		local cost = AR_GetInventoryCost();
 		if (cost > 0) then
