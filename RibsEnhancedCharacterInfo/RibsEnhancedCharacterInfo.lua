@@ -2,6 +2,7 @@
 
 -- General global variables.
 local DEBUG = true;
+local G_CurrentTalents = {};
 
 -- Core addon frame.
 local Frame = CreateFrame("Frame");
@@ -41,7 +42,23 @@ local function PlayerLogin()
 	local _, spi, _, _ = UnitStat("player", 5);
 
 	Debug(agi);
-	Debug(agi / 53);
+	Debug(string.format("%.2f", agi / 53));
+
+	TalentQuery();
+	Debug(G_CurrentTalents["Lethal Shots"]);
+end
+
+function TalentQuery()
+
+	local numTabs = GetNumTalentTabs();
+	for t = 1, numTabs do
+		local numTalents = GetNumTalents(t);
+		for i = 1, numTalents do
+			nameTalent, _, _, _, currRank, _ = GetTalentInfo(t, i);
+			G_CurrentTalents[nameTalent] = currRank;
+		end
+	end
+
 end
 
 -- Handle the OnEvent callbacks.
