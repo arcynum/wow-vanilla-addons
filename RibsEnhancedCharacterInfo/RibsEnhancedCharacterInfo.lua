@@ -1,34 +1,120 @@
-﻿local G_AddOn = "RibsEnhancedCharacterInfo"
+﻿-- Addon Name
+local G_AddOn = "RibsEnhancedCharacterInfo";
 
--- General global variables.
-local DEBUG = true;
-local G_CurrentClass;
-local G_CurrentTalents = {};
+-- Global scope variable.
+EnhancedCharacterInfo = {
 
--- Global Stats
-local G_STR, G_AGI, G_STAM, G_INT, G_SPI;
-local G_CRIT, G_CRITDMG;
+	-- General global variables.
+	debug = true;
+	currentClass = "";
+	currentTalents = {};
 
--- Core addon frame.
-local Frame = CreateFrame("Frame");
+	-- Player statistics
+	G_STR;
+	G_AGI;
+	G_STAM;
+	G_INT;
+	G_SPI;
+	G_CRIT;
+	G_CRITDMG;
 
--- Register the events we care about.
-Frame:RegisterEvent("PLAYER_LOGIN");
+	types = {
+		"STR", 			-- strength	
+		"AGI", 			-- agility
+		"STA", 			-- stamina
+		"INT", 			-- intellect
+		"SPI", 			-- spirit
+		"ARMOR", 		-- reinforced armor (not base armor)
+  
+		"ARCANERES",	-- arcane resistance
+		"FIRERES",  	-- fire resistance
+		"NATURERES",	-- nature resistance 	
+		"FROSTRES", 	-- frost resistance
+		"SHADOWRES",	-- shadow resistance
+	
+		"FISHING",  	-- fishing skill
+		"MINING",		-- mining skill
+		"HERBALISM",	-- herbalism skill
+		"SKINNING", 	-- skinning skill
+		"DEFENSE",  	-- defense skill
+
+		"BLOCK",    	-- chance to block
+		"BLOCKVALUE",	-- increased block value
+		"DODGE",		-- chance to dodge
+		"PARRY",		-- chance to parry
+		"ATTACKPOWER",	-- attack power
+		"ATTACKPOWERUNDEAD", -- attack power against undead
+		"ATTACKPOWERFERAL",  -- attack power in feral form
+		
+		"CRIT",			-- chance to get a critical strike
+		"RANGEDATTACKPOWER", -- ranged attack power
+		"RANGEDCRIT",	-- chance to get a crit with ranged weapons
+		"TOHIT",		-- chance to hit
+
+		"DMG",			-- spell damage
+		"DMGUNDEAD",	-- spell damage against undead
+		
+		"ARCANEDMG",	-- arcane spell damage
+		"FIREDMG",		-- fire spell damage
+		"FROSTDMG",		-- frost spell damage
+		"HOLYDMG",		-- holy spell damage
+		"NATUREDMG",	-- nature spell damage
+		"SHADOWDMG",	-- shadow spell damage
+		"SPELLCRIT",	-- chance to crit with spells
+		"HEAL",			-- healing 
+		"HOLYCRIT", 	-- chance to crit with holy spells
+		"SPELLTOHIT", 	-- Chance to Hit with spells
+
+		"SPELLPEN", 	-- amount of spell resist reduction
+
+		"HEALTHREG",	-- health regeneration per 5 sec.
+		"MANAREG",		-- mana regeneration per 5 sec.
+		"HEALTH",		-- health points
+		"MANA",			-- mana points
+	};
+
+	slots = {
+		"Head",
+		"Neck",
+		"Shoulder",
+		"Shirt",
+		"Chest",
+		"Waist",
+		"Legs",
+		"Feet",
+		"Wrist",
+		"Hands",
+		"Finger0",
+		"Finger1",
+		"Trinket0",
+		"Trinket1",
+		"Back",
+		"MainHand",
+		"SecondaryHand",
+		"Ranged",
+		"Tabard",
+	};
+
+};
 
 -- Debug function
-function Debug(message)
-	if (DEBUG == true) then
-		DEFAULT_CHAT_FRAME:AddMessage("|cffff0000"..message);
+function EnhancedCharacterInfo:Debug(message)
+	if (self.debug) then
+		if (message ~= nil) then
+			DEFAULT_CHAT_FRAME:AddMessage("|cffff0000" .. message);
+		else
+			DEFAULT_CHAT_FRAME:AddMessage("|cffff0000" .. "Variable is nil");
+		end
 	end
 end
 
 -- String rounding
-function StatPrint(stat)
-	Debug(string.format("%.2f", stat));
+function EnhancedCharacterInfo:StatPrint(stat)
+	self:Debug(string.format("%.2f", stat));
 end
 
 -- Find spell by name.
-function FindSpellIdByName(name)
+function EnhancedCharacterInfo:FindSpellIdByName(name)
 	-- Get the spell tab information.
 	local _, _, offset, numSpells = GetSpellTabInfo(GetNumSpellTabs());
 	-- Calculate the total number of spells.
@@ -42,84 +128,132 @@ function FindSpellIdByName(name)
 end
 
 -- Function to handle the player login event.
-function PlayerLogin()
+function EnhancedCharacterInfo:PlayerLogin()
 	DEFAULT_CHAT_FRAME:AddMessage("|cff00ccff"..G_AddOn.."|cffffffff Loaded");
 
+	-- Set the tooltip owner.
+	EnhancedCharacterInfoTooltip:SetOwner(UIParent, "ANCHOR_NONE");
+
 	-- Get the players class.
-	_, G_CurrentClass = UnitClass("player");
+	_, self.currentClass = UnitClass("player");
+
+	-- Wut
+	stats = GetInventoryItemLink("player", 16);
+	self:Debug(stats);
+	self:ScanItem(stats);
 
 	-- Get the players base statistics
-	G_STR, G_AGI, G_STAM, G_INT, G_SPI = GetCurrentStatistics();
+	self:GetCurrentStatistics();
 
 	-- Generate the players talents
-	TalentQuery();
+	self:TalentQuery();
 
 	-- Calculate crit stats
-	CalculateCrit();
+	self:CalculateCrit();
 
 	-- Apply the talent modifiers to the stats.
-	ApplyTalentModifiers();
+	self:ApplyTalentModifiers();
 
 	-- Print out some of the stats.
-	Debug(G_AGI);
-	StatPrint(G_CRIT);
+	self:Debug(self.G_AGI);
+	self:StatPrint(self.G_CRIT);
 end
 
 -- Function to get the base statistics of the player.
-function GetCurrentStatistics()
-	_, str, _, _ = UnitStat("player", 1);
-	_, agi, _, _ = UnitStat("player", 2);
-	_, stam, _, _ = UnitStat("player", 3);
-	_, int, _, _ = UnitStat("player", 4);
-	_, spi, _, _ = UnitStat("player", 5);
-	return str, agi, stam, int, spi;
+function EnhancedCharacterInfo:GetCurrentStatistics()
+	_, self.G_STR, _, _ = UnitStat("player", 1);
+	_, self.G_AGI, _, _ = UnitStat("player", 2);
+	_, self.G_STAM, _, _ = UnitStat("player", 3);
+	_, self.G_INT, _, _ = UnitStat("player", 4);
+	_, self.G_SPI, _, _ = UnitStat("player", 5);
 end
 
 -- Calculate the crit chance depending on the class.
-function CalculateCrit()
-	if (G_CurrentClass == "ROGUE") then
-		G_CRIT = G_AGI / 29;
-	elseif (G_CurrentClass == "HUNTER") then
-		G_CRIT = G_AGI / 53;
+function EnhancedCharacterInfo:CalculateCrit()
+	if (self.currentClass == "ROGUE") then
+		self.G_CRIT = self.G_AGI / 29;
+	elseif (self.currentClass == "HUNTER") then
+		self.G_CRIT = self.G_AGI / 53;
 	else
-		G_CRIT = G_AGI / 20;
+		self.G_CRIT = self.G_AGI / 20;
 	end
 end
 
 -- Creates a lookup table with the characters current talents.
 -- Need a event hook for when talents are changed to make sure the rates are adjusted.
-function TalentQuery()
+function EnhancedCharacterInfo:TalentQuery()
 	local numTabs = GetNumTalentTabs();
 	for t = 1, numTabs do
 		local numTalents = GetNumTalents(t);
 		for i = 1, numTalents do
 			nameTalent, _, _, _, currRank, _ = GetTalentInfo(t, i);
-			G_CurrentTalents[nameTalent] = currRank;
+			self.currentTalents[nameTalent] = currRank;
 		end
 	end
 end
 
 -- Function which applies talent modifiers to the numbers.
-function ApplyTalentModifiers()
-	if (G_CurrentClass == "HUNTER") then
-		HunterTalentModifiers();
+function EnhancedCharacterInfo:ApplyTalentModifiers()
+	if (self.currentClass == "HUNTER") then
+		self:HunterTalentModifiers();
 	end
 end
 
 -- Hunter talent modifiers
-function HunterTalentModifiers()
-	G_CRIT = G_CRIT + G_CurrentTalents["Lethal Shots"];
+function EnhancedCharacterInfo:HunterTalentModifiers()
+	self.G_CRIT = self.G_CRIT + self.currentTalents["Lethal Shots"];
+end
+
+-- Scan the items tooltip.
+function EnhancedCharacterInfo:ScanItem(itemlink)
+
+	self:Debug(itemlink);
+
+	itemName, itemLink, itemRarity, itemLevel, itemMinLevel, itemType, itemSubType, itemStackCount, itemEquipLoc, itemTexture, itemSellPrice = GetItemInfo(itemlink);
+
+	self:Debug(itemName);
+	self:Debug(itemLink);
+	self:Debug(itemRarity);
+	self:Debug(itemLevel);
+	self:Debug(itemMinLevel);
+	self:Debug(itemType);
+	self:Debug(itemSubType);
+	self:Debug(itemStackCount);
+	self:Debug(itemEquipLoc);
+	self:Debug(itemTexture);
+	self:Debug(itemSellPrice);
+
+	local name = GetItemInfo(itemlink);
+	self:Debug(name);
+	if (name) then
+		self:ScanTooltip();
+	end
+end
+
+-- Function for scanning toolips
+function EnhancedCharacterInfo:ScanTooltip()
+	local tmpTxt, line;
+	local lines = EnhancedCharacterInfoTooltip:NumLines();
+
+	for i = 2, lines, 1 do
+		tmpText = getglobal("EnhancedCharacterInfoTooltipTextLeft"..i);
+		val = nil;
+		if (tmpText:GetText()) then
+			line = tmpText:GetText();
+			self:Debug(line);
+		end
+	end
+end
+
+-- Handle the OnLoad callbacks.
+function EnhancedCharacterInfo:OnLoad()
+	EnhancedCharacterInfoFrame:RegisterEvent("PLAYER_ENTERING_WORLD");
+	EnhancedCharacterInfoFrame:RegisterEvent("PLAYER_LEAVING_WORLD");
 end
 
 -- Handle the OnEvent callbacks.
-function OnEvent()
-
-	-- Capture the player login event.
-	if (event == "PLAYER_LOGIN") then
-		PlayerLogin();
+function EnhancedCharacterInfo:OnEvent()
+	if (event == "PLAYER_ENTERING_WORLD") then
+		self:PlayerLogin();
 	end
-
 end
-
--- Register the frame to handle the event and update events.
-Frame:SetScript("OnEvent", OnEvent);
