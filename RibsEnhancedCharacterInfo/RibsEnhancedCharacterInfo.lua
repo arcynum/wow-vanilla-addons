@@ -140,7 +140,12 @@ function EnhancedCharacterInfo:PlayerLogin()
 	-- Wut
 	stats = GetInventoryItemLink("player", 16);
 	self:Debug(stats);
-	self:ScanItem(stats);
+
+	-- Set the item slot thing.
+	slotid, _ = GetInventorySlotInfo("HeadSlot");
+	hasItem = EnhancedCharacterInfoTooltip:SetInventoryItem("player", slotid);
+
+	self:ScanTooltip();
 
 	-- Get the players base statistics
 	self:GetCurrentStatistics();
@@ -204,29 +209,18 @@ function EnhancedCharacterInfo:HunterTalentModifiers()
 	self.G_CRIT = self.G_CRIT + self.currentTalents["Lethal Shots"];
 end
 
--- Scan the items tooltip.
-function EnhancedCharacterInfo:ScanItem(itemlink)
-
-	self:Debug(itemlink);
-
-	itemName, itemLink, itemRarity, itemLevel, itemMinLevel, itemType, itemSubType, itemStackCount, itemEquipLoc, itemTexture, itemSellPrice = GetItemInfo(itemlink);
-
-	self:Debug(itemName);
-	self:Debug(itemLink);
-	self:Debug(itemRarity);
-	self:Debug(itemLevel);
-	self:Debug(itemMinLevel);
-	self:Debug(itemType);
-	self:Debug(itemSubType);
-	self:Debug(itemStackCount);
-	self:Debug(itemEquipLoc);
-	self:Debug(itemTexture);
-	self:Debug(itemSellPrice);
-
-	local name = GetItemInfo(itemlink);
-	self:Debug(name);
-	if (name) then
-		self:ScanTooltip();
+function EnhancedCharacterInfo:ScanEquippedItems()
+	for i, slotname in self.slots do
+		slotid, _ = GetInventorySlotInfo(slotname.. "Slot");
+		hasItem = BonusScannerTooltip:SetInventoryItem("player", slotid);
+		if (hasItem) then
+			self.temp.slot = slotname;
+			BonusScanner:ScanTooltip();
+			-- if set item, mark set as already scanned
+			if (self.temp.set ~= "") then
+				self.temp.sets[BonusScanner.temp.set] = 1;
+			end;
+		end
 	end
 end
 
@@ -234,7 +228,6 @@ end
 function EnhancedCharacterInfo:ScanTooltip()
 	local tmpTxt, line;
 	local lines = EnhancedCharacterInfoTooltip:NumLines();
-
 	for i = 2, lines, 1 do
 		tmpText = getglobal("EnhancedCharacterInfoTooltipTextLeft"..i);
 		val = nil;
