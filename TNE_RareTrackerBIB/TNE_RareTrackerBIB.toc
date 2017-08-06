@@ -1,8 +1,0 @@
-## Interface: 11000
-## Title: |cffffffffBiB|r [RareTracker]
-## Author: Silent
-## Notes: BIB plugin for RareTracker.
-## SavedVariables: TNE_RTTITAN_SortBySubzone
-## Dependencies: TNE_RareTrackerCore, BhaldieInfoBar
-## OptionalDeps: 
-RareTrackerBIB.xml
