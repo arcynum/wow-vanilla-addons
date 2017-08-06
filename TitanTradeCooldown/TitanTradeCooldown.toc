@@ -1,6 +1,0 @@
-## Interface: 11200
-## Title: TitanTradeCooldown v0.35
-## Notes: Lists tradeskill cooldowns across all characters (on same account).
-## SavedVariables: TTC_Save
-## Dependencies: Titan
-TitanTradeCooldown.xml

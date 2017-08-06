@@ -1,8 +1,0 @@
-## Interface: 10900
-## Title: Titan Panel [BGinfo] v0.06
-## Notes: Plugin for Titan Panel to display Battleground Info
-## Author: Corgi
-## SavedVariables: 
-## OptionalDeps: 
-## Dependencies: Titan
-TitanBGinfo.xml

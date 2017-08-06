@@ -1,5 +1,0 @@
-<Bindings>
-	<Binding name="TITANAGGRO_REPORT" description="Toggle Report" header="TITANAGGRO_MENU">
-		TitanAggro_ToggleReport();
-	</Binding>
-</Bindings>

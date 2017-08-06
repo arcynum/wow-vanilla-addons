@@ -1,5 +1,0 @@
-<Bindings>
-	<Binding name="PvP Toggle" header="PVPSTATUS">
-		PvPStatus_KeyToggle();
-	</Binding>
-</Bindings>

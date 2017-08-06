@@ -1,6 +1,0 @@
-## Interface: 11000
-## Title: Titan Panel [Inn]
-## Notes: A module to show your current Inn home.
-## Author: CrowGoblin
-## Dependencies: Titan
-TitanInn.xml
