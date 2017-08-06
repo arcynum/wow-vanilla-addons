@@ -10,3 +10,12 @@
 [submodule "QuestieDev"]
 	path = QuestieDev
 	url = https://github.com/AeroScripts/QuestieDev.git
+[submodule "HealComm"]
+	path = HealComm
+	url = https://github.com/Aviana/HealComm.git
+[submodule "DebuffTimers"]
+	path = DebuffTimers
+	url = https://github.com/shagu/DebuffTimers.git
+[submodule "Clean_Up"]
+	path = Clean_Up
+	url = https://github.com/shirsig/Clean_Up.git
