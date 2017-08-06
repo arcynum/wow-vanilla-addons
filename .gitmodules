@@ -16,6 +16,3 @@
 [submodule "Clean_Up"]
 	path = Clean_Up
 	url = https://github.com/shirsig/Clean_Up.git
-[submodule "DebuffTimers"]
-	path = DebuffTimers
-	url = https://github.com/shagu/DebuffTimers.git
