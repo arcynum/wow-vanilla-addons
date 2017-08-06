@@ -4,3 +4,6 @@
 [submodule "BigWigs"]
 	path = BigWigs
 	url = https://github.com/MOUZU/BigWigs.git
+[submodule "SW_Stats-Vanilla"]
+	path = SW_Stats-Vanilla
+	url = https://github.com/Zerf/SW_Stats-Vanilla.git
