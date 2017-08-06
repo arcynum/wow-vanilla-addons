@@ -130,8 +130,6 @@ end
 local function ShotEnd()
 	Debug("Shot End");
 	G_Shooting = false;
-	AutoShotFontString:SetText("");
-	AutoShotFontString:SetTextColor(1.0, 1.0, 1.0, 1.0);
 end
 
 -- Function to manage swing starting.
@@ -207,14 +205,6 @@ local function AutoShotOnUpdate()
 	if (G_SwingStart ~= false) then
 		-- Get the time since the swing started.
 		local relative = GetTime() - G_SwingStart;
-
-		if (relative <= 0.5) then
-			AutoShotFontString:SetTextColor(0, 1.0, 0, 1.0);
-			AutoShotFontString:SetText("Aimed Shot Now");
-		else
-			AutoShotFontString:SetTextColor(1.0, 0, 0, 1.0);
-			AutoShotFontString:SetText("Wait");
-		end
 
 		-- Set the texture to be a percent of the swing.
 		AutoShotOverlayTexture:SetWidth(Table["Width"] * relative / G_SwingTime);
