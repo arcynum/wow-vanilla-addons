@@ -1,3 +1,6 @@
 [submodule "pfUI"]
 	path = pfUI
 	url = https://github.com/shagu/pfUI.git
+[submodule "BigWigs"]
+	path = BigWigs
+	url = https://github.com/MOUZU/BigWigs.git
