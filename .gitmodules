@@ -26,3 +26,7 @@
 	path = EQL3
 	url = https://github.com/laytya/EQL3.git
 	ignore = dirty
+[submodule "YaHT"]
+	path = YaHT
+	url = https://github.com/Aviana/YaHT.git
+	ignore = dirty
