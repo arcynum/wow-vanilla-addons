@@ -16,3 +16,6 @@
 [submodule "Clean_Up"]
 	path = Clean_Up
 	url = https://github.com/shirsig/Clean_Up.git
+[submodule "EQL3"]
+	path = EQL3
+	url = https://github.com/laytya/EQL3.git
