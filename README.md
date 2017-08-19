@@ -7,15 +7,22 @@ Addionally, there is a deployment powershell script to relocate the addons to yo
 
 ## How to run.
 All you need to do to run these items is download a copy of the repository (close or zip file).
-Once you have downloaded, open up powershell and navigate to the addon directory.
+Once you have downloaded, open up powershell and navigate to the cloned or extracted addon directory.
+
+
 Then run the following:
+
+
 ```.\deploy.ps1 -wow "Wow directory"```
 
+
 For example:
+
+
 ```.\deploy.ps1 -wow "C:\Users\USERNAME\Games\World of Warcraft"```
 
 ## Caveats
-This will delete all the existing addons in your wow folder, and reploy the latest versions of these addons.
-Make sure you use quotes in the folder path.
-I offer no support for anything to do with this repository or deployment. This was made for my own convenience, but im happy to share.
-Any updates or fixes, open a ticket or send through a pull request.
+* This will delete all the existing addons in your wow folder, and reploy the latest versions of these addons.
+* Make sure you use quotes in the folder path.
+* I offer no support for anything to do with this repository or deployment. This was made for my own convenience, but im happy to share.
+* Any updates or fixes, open a ticket or send through a pull request.
