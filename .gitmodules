@@ -30,3 +30,6 @@
 	path = YaHT
 	url = https://github.com/Aviana/YaHT.git
 	ignore = dirty
+[submodule "_LP"]
+	path = _LP
+	url = https://github.com/satan666/_LP.git
