@@ -23,9 +23,11 @@ Remove-Item "${ADDONS_PATH}\\.git" -Recurse -Force;
 Remove-Item "${ADDONS_PATH}\\SW_Stats-Vanilla" -Recurse -Force;
 Remove-Item "${ADDONS_PATH}\\EQL3" -Recurse -Force;
 Remove-Item "${ADDONS_PATH}\\QuestieDev" -Recurse -Force;
+Remove-Item "${ADDONS_PATH}\\_LP" -Recurse -Force;
 
 Write-Host "Unpacking the badly packaged addons.";
 Copy-Item -Path "${REPO_PATH}\\SW_Stats-Vanilla\\SW_FixLogStrings" -Destination $ADDONS_PATH -Recurse;
 Copy-Item -Path "${REPO_PATH}\\SW_Stats-Vanilla\\SW_Stats" -Destination $ADDONS_PATH -Recurse;
 Copy-Item -Path "${REPO_PATH}\\EQL3\\EQL3" -Destination $ADDONS_PATH -Recurse;
 Copy-Item -Path "${REPO_PATH}\\QuestieDev\\!Questie" -Destination $ADDONS_PATH -Recurse;
+Copy-Item -Path "${REPO_PATH}\\_LP\\_LazyPig" -Destination $ADDONS_PATH -Recurse;
