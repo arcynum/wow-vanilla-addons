@@ -39,3 +39,6 @@
 [submodule "KLH-Threat-Meter-17.35"]
 	path = KLH-Threat-Meter-17.35
 	url = https://github.com/Linae-Kronos/KLH-Threat-Meter-17.35.git
+[submodule "CEPGP"]
+	path = CEPGP
+	url = https://github.com/Alumian/CEPGP.git
