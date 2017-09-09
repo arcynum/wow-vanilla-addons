@@ -36,6 +36,7 @@ Copy-Item -Path "${REPO_PATH}\\BonusScanner" -Destination $ADDONS_PATH -Recurse;
 Copy-Item -Path "${REPO_PATH}\\BuddySync" -Destination $ADDONS_PATH -Recurse;
 Copy-Item -Path "${REPO_PATH}\\Cartographer" -Destination $ADDONS_PATH -Recurse;
 Copy-Item -Path "${REPO_PATH}\\CastingBarTime" -Destination $ADDONS_PATH -Recurse;
+Copy-Item -Path "${REPO_PATH}\\CEPGP" -Destination $ADDONS_PATH -Recurse;
 Copy-Item -Path "${REPO_PATH}\\CEnemyCastBar" -Destination $ADDONS_PATH -Recurse;
 Copy-Item -Path "${REPO_PATH}\\ChatLog" -Destination $ADDONS_PATH -Recurse;
 Copy-Item -Path "${REPO_PATH}\\Clean_Up" -Destination $ADDONS_PATH -Recurse;
