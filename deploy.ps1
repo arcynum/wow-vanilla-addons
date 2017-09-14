@@ -89,6 +89,7 @@ Copy-Item -Path "${REPO_PATH}\\SimpleTranqShot" -Destination $ADDONS_PATH -Recur
 Copy-Item -Path "${REPO_PATH}\\Stubby" -Destination $ADDONS_PATH -Recurse;
 Copy-Item -Path "${REPO_PATH}\\TheoryCraft" -Destination $ADDONS_PATH -Recurse;
 Copy-Item -Path "${REPO_PATH}\\URLCopy" -Destination $ADDONS_PATH -Recurse;
+Copy-Item -Path "${REPO_PATH}\\VanillaGuide" -Destination $ADDONS_PATH -Recurse;
 Copy-Item -Path "${REPO_PATH}\\WeaponQuickSwap" -Destination $ADDONS_PATH -Recurse;
 Copy-Item -Path "${REPO_PATH}\\WIM" -Destination $ADDONS_PATH -Recurse;
 Copy-Item -Path "${REPO_PATH}\\YaHT" -Destination $ADDONS_PATH -Recurse;
