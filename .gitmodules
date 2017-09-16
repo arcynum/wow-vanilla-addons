@@ -45,3 +45,12 @@
 [submodule "VanillaGuide"]
 	path = VanillaGuide
 	url = https://github.com/rsheep/VanillaGuide.git
+[submodule "ShaguQuest"]
+	path = ShaguQuest
+	url = https://github.com/shagu/ShaguQuest.git
+[submodule "ShaguKill"]
+	path = ShaguKill
+	url = https://github.com/shagu/ShaguKill.git
+[submodule "ShaguScore"]
+	path = ShaguScore
+	url = https://github.com/shagu/ShaguScore.git
