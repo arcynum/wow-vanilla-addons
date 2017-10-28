@@ -54,3 +54,6 @@
 [submodule "ModifiedPowerAuras"]
 	path = ModifiedPowerAuras
 	url = https://github.com/Geigerkind/ModifiedPowerAuras.git
+[submodule "TrinketMenu-Fix"]
+	path = TrinketMenu-Fix
+	url = https://github.com/satan666/TrinketMenu-Fix.git
