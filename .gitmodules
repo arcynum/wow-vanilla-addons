@@ -51,3 +51,6 @@
 [submodule "ShaguScore"]
 	path = ShaguScore
 	url = https://github.com/shagu/ShaguScore.git
+[submodule "ModifiedPowerAuras"]
+	path = ModifiedPowerAuras
+	url = https://github.com/Geigerkind/ModifiedPowerAuras.git
