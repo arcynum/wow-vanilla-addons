@@ -90,6 +90,7 @@ Copy-Item -Path "${REPO_PATH}\\ShaguDB" -Destination $ADDONS_PATH -Recurse;
 Copy-Item -Path "${REPO_PATH}\\ShaguKill" -Destination $ADDONS_PATH -Recurse;
 Copy-Item -Path "${REPO_PATH}\\ShaguQuest" -Destination $ADDONS_PATH -Recurse;
 Copy-Item -Path "${REPO_PATH}\\ShaguScore" -Destination $ADDONS_PATH -Recurse;
+Copy-Item -Path "${REPO_PATH}\\SHunterTimers" -Destination $ADDONS_PATH -Recurse;
 Copy-Item -Path "${REPO_PATH}\\Stubby" -Destination $ADDONS_PATH -Recurse;
 Copy-Item -Path "${REPO_PATH}\\TheoryCraft" -Destination $ADDONS_PATH -Recurse;
 Copy-Item -Path "${REPO_PATH}\\URLCopy" -Destination $ADDONS_PATH -Recurse;
@@ -145,3 +146,4 @@ Copy-Item -Path "${REPO_PATH}\\DPSMate\\DPSMate_Procs" -Destination $ADDONS_PATH
 Copy-Item -Path "${REPO_PATH}\\DPSMate\\DPSMate_Threat" -Destination $ADDONS_PATH -Recurse;
 Copy-Item -Path "${REPO_PATH}\\KLH-Threat-Meter-17.35\\KTM 17.35\\KLHPerformanceMonitor" -Destination $ADDONS_PATH -Recurse;
 Copy-Item -Path "${REPO_PATH}\\KLH-Threat-Meter-17.35\\KTM 17.35\\KLHThreatMeter" -Destination $ADDONS_PATH -Recurse;
+Copy-Item -Path "${REPO_PATH}\\TrinketMenu-Fix\\TrinketMenu" -Destination $ADDONS_PATH -Recurse;
