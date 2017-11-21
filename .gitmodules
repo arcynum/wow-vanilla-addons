@@ -57,3 +57,6 @@
 [submodule "TrinketMenu-Fix"]
 	path = TrinketMenu-Fix
 	url = https://github.com/satan666/TrinketMenu-Fix.git
+[submodule "VCB"]
+	path = VCB
+	url = https://github.com/Geigerkind/VCB.git
