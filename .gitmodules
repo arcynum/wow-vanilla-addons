@@ -60,3 +60,6 @@
 [submodule "VCB"]
 	path = VCB
 	url = https://github.com/Geigerkind/VCB.git
+[submodule "SortBags"]
+	path = SortBags
+	url = https://github.com/shirsig/SortBags.git
