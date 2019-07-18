@@ -1,38 +1,39 @@
 [submodule "pfUI"]
 	path = pfUI
 	url = https://github.com/shagu/pfUI.git
-	ignore = dirty
+	branch = master
 [submodule "BigWigs"]
 	path = BigWigs
 	url = https://github.com/MOUZU/BigWigs.git
-	ignore = dirty
+	branch = master
 [submodule "SW_Stats-Vanilla"]
 	path = SW_Stats-Vanilla
 	url = https://github.com/Zerf/SW_Stats-Vanilla.git
-	ignore = dirty
+	branch = master
 [submodule "QuestieDev"]
 	path = QuestieDev
 	url = https://github.com/AeroScripts/QuestieDev.git
-	ignore = dirty
+	branch = master
 [submodule "HealComm"]
 	path = HealComm
 	url = https://github.com/Aviana/HealComm.git
-	ignore = dirty
+	branch = master
 [submodule "Clean_Up"]
 	path = Clean_Up
 	url = https://github.com/shirsig/Clean_Up.git
-	ignore = dirty
+	branch = master
 [submodule "EQL3"]
 	path = EQL3
 	url = https://github.com/laytya/EQL3.git
-	ignore = dirty
+	branch = master
 [submodule "YaHT"]
 	path = YaHT
 	url = https://github.com/Aviana/YaHT.git
-	ignore = dirty
+	branch = master
 [submodule "_LP"]
 	path = _LP
 	url = https://github.com/satan666/_LP.git
+	branch = master
 [submodule "DPSMate"]
 	path = DPSMate
 	url = https://github.com/Geigerkind/DPSMate.git
@@ -40,6 +41,7 @@
 [submodule "KLH-Threat-Meter-17.35"]
 	path = KLH-Threat-Meter-17.35
 	url = https://github.com/Linae-Kronos/KLH-Threat-Meter-17.35.git
+	branch = master
 [submodule "CEPGP"]
 	path = CEPGP
 	url = https://github.com/Alumian/CEPGP.git
@@ -47,21 +49,28 @@
 [submodule "VanillaGuide"]
 	path = VanillaGuide
 	url = https://github.com/rsheep/VanillaGuide.git
+	branch = master
 [submodule "ShaguKill"]
 	path = ShaguKill
 	url = https://github.com/shagu/ShaguKill.git
+	branch = master
 [submodule "ShaguScore"]
 	path = ShaguScore
 	url = https://github.com/shagu/ShaguScore.git
+	branch = master
 [submodule "ModifiedPowerAuras"]
 	path = ModifiedPowerAuras
 	url = https://github.com/Geigerkind/ModifiedPowerAuras.git
+	branch = master
 [submodule "TrinketMenu-Fix"]
 	path = TrinketMenu-Fix
 	url = https://github.com/satan666/TrinketMenu-Fix.git
+	branch = master
 [submodule "VCB"]
 	path = VCB
 	url = https://github.com/Geigerkind/VCB.git
+	branch = master
 [submodule "SortBags"]
 	path = SortBags
 	url = https://github.com/shirsig/SortBags.git
+	branch = master
