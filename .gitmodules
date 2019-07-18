@@ -36,6 +36,7 @@
 [submodule "DPSMate"]
 	path = DPSMate
 	url = https://github.com/Geigerkind/DPSMate.git
+	branch = master
 [submodule "KLH-Threat-Meter-17.35"]
 	path = KLH-Threat-Meter-17.35
 	url = https://github.com/Linae-Kronos/KLH-Threat-Meter-17.35.git
