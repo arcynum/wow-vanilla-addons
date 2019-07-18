@@ -42,6 +42,7 @@
 [submodule "CEPGP"]
 	path = CEPGP
 	url = https://github.com/Alumian/CEPGP.git
+	branch = master
 [submodule "VanillaGuide"]
 	path = VanillaGuide
 	url = https://github.com/rsheep/VanillaGuide.git
